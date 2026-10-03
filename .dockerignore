@@ -32,6 +32,12 @@ AGENTS.md
 README.md
 LICENSE
 
+# Unit tests — never part of the runtime image
+**/test
+**/__tests__
+**/*.test.ts
+tests
+
 # Docker files themselves
 Dockerfile
 .dockerignore

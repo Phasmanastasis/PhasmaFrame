@@ -39,6 +39,34 @@ db-migrate:
 check:
     pnpm run check
 
+# Run every workspace's unit tests (pass runner flags via `just test -- <flags>`)
+test +args="":
+    pnpm run test {{ args }}
+
+# Run packages/shared unit tests only
+test-shared +args="":
+    pnpm --filter @app/shared test {{ args }}
+
+# Run apps/api unit tests only
+test-api +args="":
+    pnpm --filter @app/api test {{ args }}
+
+# Run apps/mobile domain unit tests only
+test-mobile +args="":
+    pnpm --filter @app/mobile test {{ args }}
+
+# Web has no unit tests (UI-only React island); see docs/dev/testing.md
+test-web:
+    @ echo "No apps/web unit tests: UI-only island, out of scope. See docs/dev/testing.md."
+
+# Watch mode for a package's tests (human devs): `just test-watch @app/shared`
+test-watch package="@app/shared":
+    pnpm --filter {{ package }} test -- --watch
+
+# Coverage report for a package (node:test): `just test-coverage @app/api`
+test-coverage package="@app/shared":
+    pnpm --filter {{ package }} test -- --experimental-test-coverage
+
 # Build every workspace
 build:
     pnpm run build
@@ -103,11 +131,12 @@ lint:
 format:
     just format-prisma
 
-# Run all checks the way CI does (generate client, type-check, build)
+# Run all checks the way CI does (generate client, type-check, build, test)
 ci:
     just db-generate
     just check
     just build
+    just test
 
 # Build the production Docker image
 docker-build:
