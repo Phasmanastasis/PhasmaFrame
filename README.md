@@ -21,3 +21,7 @@ The API runs on `http://localhost:3000`. Shared request/response schemas and typ
 - `apps/web` — Astro site with React islands and Tailwind CSS.
 - `apps/api` — Hono server, Zod validation, and Prisma data access.
 - `packages/shared` — API schemas and TypeScript contracts consumed by both apps.
+
+## License
+
+Licensed under the Mozilla Public License 2.0 (MPL-2.0). See [`LICENSE`](./LICENSE).
