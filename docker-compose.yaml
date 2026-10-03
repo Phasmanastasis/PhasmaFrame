@@ -1,0 +1,40 @@
+# Compose file for the PhasmaFrame API. Deployable directly as a Komodo Stack
+# (Komodo clones the repo and runs this file). No obsolete `version:` key.
+#
+# This file contains NO secrets. The Komodo deploy API key is used only by the
+# deploy tooling (see docs/dev/deployment.md); it is never passed to the container.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # For Komodo/registry deploys you can set an image instead of building here.
+    image: ${API_IMAGE:-phasmaframe-api:latest}
+    restart: unless-stopped
+    # App runtime config, with sensible defaults so it runs without a .env.
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3000}
+      # SQLite database lives on the mounted volume.
+      DATABASE_URL: ${DATABASE_URL:-file:/data/dev.db}
+      # CORS origin for the web app (override per environment).
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:4321}
+    # Optional: load additional non-secret app vars from a local env file if present.
+    # (Komodo injects env itself; keep secrets in Komodo, not in the repo.)
+    env_file:
+      - path: .env.app
+        required: false
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - api-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  api-data:
