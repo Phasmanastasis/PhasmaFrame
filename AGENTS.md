@@ -13,6 +13,16 @@ how things work.** Keep the docs in sync with reality; they are the source of tr
 | [`docs/dev/getting-started.md`](docs/dev/getting-started.md) | Setting up a machine: installing Node, pnpm, just, direnv, Docker; creating `.env`; first run. |
 | [`docs/dev/devtools.md`](docs/dev/devtools.md) | You need a tool reference — just recipes, pnpm scripts, direnv, Prisma, Docker, Komodo. |
 | [`docs/dev/deployment.md`](docs/dev/deployment.md) | Deploying to Komodo: prerequisites, flow, service-user permissions, troubleshooting. |
+| [`docs/dev/workflow.md`](docs/dev/workflow.md) | Tracking and shipping work: one feature per branch, PR, and Linear task. |
+
+## Workflow rule (one feature per branch/PR/task) — binding
+
+Every feature gets its own Linear task, its own branch, and its own pull request — no
+bundling. Branches follow `jeremyviengarriola/phasm-NN-slug`, PRs link their Linear task
+and target `master`, never push directly to `master`, never force-push shared branches,
+and keep diffs small. Agents never merge the PR; a human reviews and merges. Canonical
+rule: [`.kiro/steering/git-linear-workflow.md`](.kiro/steering/git-linear-workflow.md)
+(always on); human summary: [`docs/dev/workflow.md`](docs/dev/workflow.md).
 
 ## Task runner
 
