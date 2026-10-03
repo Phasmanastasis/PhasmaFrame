@@ -1,8 +1,73 @@
 ---
-import HealthHub from '../components/HealthHub';
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Alaga · Offline BP follow-up">
-  <HealthHub client:load />
+<BaseLayout title="Kasigla · Care that reaches everywhere">
+  <main>
+    <section class="bg-[#f2f4ef] px-6 pb-16 pt-14 sm:pb-24 sm:pt-20">
+      <div class="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(19rem,0.8fr)] lg:items-center lg:gap-20">
+        <div>
+          <h1 class="max-w-3xl text-[2.65rem] font-semibold leading-[1.08] tracking-[-0.03em] text-[#243e35] sm:text-6xl">
+            A health record that stays close to home.
+          </h1>
+          <p class="mt-6 max-w-2xl text-lg leading-8 text-[#526158]">
+            Kasigla helps patients and caregivers keep blood pressure readings together, so they can review a dated history with a barangay health worker—even when internet access is limited.
+          </p>
+          <div class="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
+            <a href="/patient" class="inline-flex min-h-12 items-center justify-center rounded-full bg-[#285d50] px-6 font-semibold text-white transition hover:bg-[#204c41] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#285d50] focus-visible:ring-offset-2">
+              Try it
+            </a>
+            <a href="/bhw" class="inline-flex min-h-12 items-center font-semibold text-[#285d50] underline decoration-[#9bb8a9] underline-offset-4 hover:text-[#204c41] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#285d50] focus-visible:ring-offset-2">
+              See what Health Workers see
+            </a>
+          </div>
+          <p class="mb-0 mt-6 text-sm leading-6 text-[#626a62]">A simple record for follow-up. Not a diagnosis or treatment guide.</p>
+        </div>
+
+        <aside aria-label="How a record supports follow-up" class="border-t-2 border-[#285d50] pt-5 lg:ml-4">
+          <p class="mb-6 text-sm font-semibold uppercase tracking-[0.12em] text-[#386b5c]">From one reading to a visit</p>
+          <ol class="m-0 list-none p-0">
+            <li class="grid grid-cols-[2.5rem_1fr] gap-4 border-b border-[#cbd8cf] py-5 first:pt-0">
+              <span class="pt-0.5 text-sm font-semibold tabular-nums text-[#75847a]">01</span>
+              <div>
+                <h2 class="m-0 text-lg font-semibold text-[#293b33]">Record at home</h2>
+                <p class="mb-0 mt-1.5 leading-7 text-[#526158]">Save a reading taken with an external blood pressure monitor.</p>
+              </div>
+            </li>
+            <li class="grid grid-cols-[2.5rem_1fr] gap-4 border-b border-[#cbd8cf] py-5">
+              <span class="pt-0.5 text-sm font-semibold tabular-nums text-[#75847a]">02</span>
+              <div>
+                <h2 class="m-0 text-lg font-semibold text-[#293b33]">Review with a BHW</h2>
+                <p class="mb-0 mt-1.5 leading-7 text-[#526158]">Bring the dated history to a barangay health worker for follow-up.</p>
+              </div>
+            </li>
+            <li class="grid grid-cols-[2.5rem_1fr] gap-4 py-5 last:pb-0">
+              <span class="pt-0.5 text-sm font-semibold tabular-nums text-[#75847a]">03</span>
+              <div>
+                <h2 class="m-0 text-lg font-semibold text-[#293b33]">Prepare a summary</h2>
+                <p class="mb-0 mt-1.5 leading-7 text-[#526158]">Add visit context and prepare notes for the next RHU visit.</p>
+              </div>
+            </li>
+          </ol>
+        </aside>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="scroll-mt-16 bg-white px-6 py-14 sm:py-18">
+      <div class="mx-auto grid max-w-6xl gap-8 border-t border-[#e4e9e2] pt-8 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] md:gap-16">
+        <h2 class="m-0 max-w-md text-3xl font-semibold leading-tight tracking-[-0.02em] text-[#243e35] sm:text-4xl">Care can continue between visits.</h2>
+        <div>
+          <p class="m-0 max-w-2xl text-lg leading-8 text-[#526158]">
+            Keep the reading, date, and recorder together on the device. The BHW view can add visit notes and prepare a concise summary for the next RHU visit.
+          </p>
+          <p class="mb-0 mt-5 max-w-2xl leading-7 text-[#626a62]">
+            This is a prototype with synthetic demo information saved in this browser. It does not transfer records between devices or send them directly to an RHU.
+          </p>
+          <a href="/choose" class="mt-7 inline-flex min-h-11 items-center font-semibold text-[#285d50] underline decoration-[#9bb8a9] underline-offset-4 hover:text-[#204c41] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#285d50] focus-visible:ring-offset-2">
+            Explore the demo
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
 </BaseLayout>

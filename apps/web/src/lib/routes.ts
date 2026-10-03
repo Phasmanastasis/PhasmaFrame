@@ -4,7 +4,7 @@
 //
 // Path note: the barangay health worker (BHW) role lands on `/bhw`.
 export const ROUTES = {
-  chooser: '/',
+  chooser: '/choose',
   patient: '/patient',
   bhw: '/bhw',
 } as const;

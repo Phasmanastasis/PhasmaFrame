@@ -4,10 +4,10 @@ import assert from 'node:assert/strict';
 import { ROUTES, routeForWorkspace } from '../src/lib/routes';
 
 // Expected values come from the product requirement for this feature
-// (chooser at /, patient at /patient, BHW at /bhw), not from any runtime output.
+// (chooser at /choose, patient at /patient, BHW at /bhw), not runtime output.
 
-test('ROUTES: chooser lives at the site root', () => {
-  assert.equal(ROUTES.chooser, '/');
+test('ROUTES: chooser lives at /choose', () => {
+  assert.equal(ROUTES.chooser, '/choose');
 });
 
 test('ROUTES: patient/caregiver role lands on /patient', () => {
