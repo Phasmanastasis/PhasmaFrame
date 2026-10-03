@@ -17,9 +17,14 @@ ENV PNPM_HOME=/pnpm \
 # Enable the pnpm version pinned by package.json's "packageManager" field.
 RUN corepack enable
 # Copy manifests first so the install layer caches on dependency changes only.
+# All workspace members (apps/*, packages/*) must be present so a
+# `--frozen-lockfile` install matches the lockfile; apps/patient also supplies
+# the Expo toolchain the web build uses to stage the patient app into dist.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
+COPY apps/patient/package.json apps/patient/package.json
+COPY apps/mobile/package.json apps/mobile/package.json
 COPY packages/shared/package.json packages/shared/package.json
 # BuildKit cache mount keeps the pnpm store warm; --frozen-lockfile makes the
 # lockfile authoritative.
@@ -27,6 +32,10 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm install --frozen-lockfile
 # Now the sources.
 COPY . .
+# Build the static frontend (Astro). Same-origin relative `/api` is the default
+# (no PUBLIC_API_URL), so nothing environment-specific is baked into the build.
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    pnpm --filter @app/web build
 # Create a flattened, self-contained bundle in /app/out containing the api + its
 # workspace deps (including the tsx runtime and the linked @app/shared package).
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
@@ -59,6 +68,14 @@ RUN apt-get update \
 # Self-contained api bundle (node_modules includes tsx, the Prisma client, and the
 # workspace-linked @app/shared TypeScript source resolved at runtime by tsx).
 COPY --from=build /app/out ./
+# Built static frontend, served same-origin by the Node entry (see src/index.ts).
+COPY --from=build /app/apps/web/dist ./public
+
+# Startup script: apply the SQLite schema to the mounted volume (idempotent),
+# then exec the server. `prisma db push` creates/updates the schema without
+# needing a migration history and is safe to re-run on an existing database.
+COPY --chown=node:node docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # SQLite data directory, owned by the non-root user.
 RUN mkdir -p /data && chown -R node:node /data /app
@@ -71,6 +88,6 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD curl -fsS "http://127.0.0.1:${PORT}/api/health" || exit 1
 
-# tini as PID 1; run the API via the workspace tsx binary (exec form).
-ENTRYPOINT ["/usr/bin/tini", "--"]
+# tini as PID 1; the entrypoint applies the schema then execs the API via tsx.
+ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node_modules/.bin/tsx", "src/index.ts"]

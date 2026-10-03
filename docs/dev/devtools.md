@@ -16,7 +16,8 @@ installation instructions, see [getting-started.md](./getting-started.md).
   the project directory. `just` loads `.env` on its own via `set dotenv-load`, so direnv
   is a convenience for your interactive shell, not a requirement.
 - **Prisma** manages the database schema and the local SQLite database for the API.
-- **Docker** (+ Compose) builds and runs the API as a container; the compose file doubles
+- **Docker** (+ Compose) builds and runs a single container that serves the built Astro
+  frontend at `/` and the Hono API at `/api/*` on one port; the compose file doubles
   as the Komodo Stack definition.
 - **Komodo** is the deploy target. The deploy tooling calls Komodo's HTTP API using
   credentials from `.env`; it is governed by a strict least-privilege rule

@@ -1,9 +1,11 @@
 # Deployment (Komodo)
 
 The API is deployed to a [Komodo](https://komo.do) instance that runs the repo's
-`docker-compose.yaml` as a **Stack**. This page covers the flow, prerequisites, and
-troubleshooting. The binding rules live in the always-on steering file
-`.kiro/steering/komodo-deploy.md`.
+`docker-compose.yaml` as a **Stack**. The single container serves the built Astro
+frontend at `/` and the Hono API at `/api/*` on one port (3000), same-origin — matching
+the Cloudflare deployment (Pages at `/`, Worker route at `/api/*`). This page covers the
+flow, prerequisites, and troubleshooting. The binding rules live in the always-on steering
+file `.kiro/steering/komodo-deploy.md`.
 
 ## Live deployment
 
