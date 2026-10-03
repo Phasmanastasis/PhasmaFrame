@@ -140,6 +140,7 @@ PhasmaFrame/
 | [`docs/dev/deployment.md`](./docs/dev/deployment.md) | Deploy to Komodo |
 | [`docs/dev/deployment-cloudflare.md`](./docs/dev/deployment-cloudflare.md) | Deploy to Cloudflare |
 | [`docs/dev/workflow.md`](./docs/dev/workflow.md) | One feature per branch, PR, and Linear task |
+| [`docs/dev/testing.md`](./docs/dev/testing.md) | Unit testing: runner, `just test*` recipes, coverage, gaps |
 
 Agents and contributors: start with [`AGENTS.md`](./AGENTS.md).
 

@@ -2,18 +2,8 @@ import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { getStore } from "../../../src/domain/store";
+import { toCsv } from "../../../src/domain/summary";
 import { styles, theme } from "../../../src/ui/theme";
-
-/** Build a CSV string for the patient's readings (RhuSummaryBuilder, #40). */
-function toCsv(
-  rows: { measuredAt: string; systolic: number; diastolic: number; measuredBy: string }[],
-): string {
-  const header = "measured_at,systolic,diastolic,measured_by";
-  const body = rows
-    .map((r) => `${r.measuredAt},${r.systolic},${r.diastolic},${r.measuredBy}`)
-    .join("\n");
-  return `${header}\n${body}`;
-}
 
 export default function RhuSummary() {
   const { id } = useLocalSearchParams<{ id: string }>();

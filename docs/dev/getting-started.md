@@ -174,6 +174,16 @@ Then open the web app at <http://localhost:4321>. The API runs at
 
 > Tip: `just dev-api` and `just dev-web` run a single side if you only need one.
 
+### Running the tests
+
+```bash
+just test            # every workspace's unit tests (node:test + tsx)
+just test-shared     # or a single package: test-shared / test-api / test-mobile
+```
+
+`just test` needs only `just install` first — no database, `.env`, or network. For what is
+and isn't covered and how to add tests, see [testing.md](./testing.md).
+
 ### Komodo deploy credentials & permissions
 
 Deploying is optional for local dev. If you will deploy:
@@ -206,6 +216,7 @@ Work through this checklist; everything should succeed before you start coding.
 - [ ] `apps/api/.env` exists (copied from `apps/api/.env.example`)
 - [ ] `just db-migrate` creates the local SQLite DB
 - [ ] `just check` passes (type-checks every workspace)
+- [ ] `just test` passes (runs every workspace's unit tests; see [testing.md](./testing.md))
 - [ ] `just dev` serves the web app at <http://localhost:4321>
 
 ## Troubleshooting
