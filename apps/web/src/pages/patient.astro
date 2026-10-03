@@ -1,0 +1,8 @@
+---
+import HealthHub from '../components/HealthHub';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Kasigla · Patient / caregiver" showNav={false} manifestPath="/manifest-patient.webmanifest">
+  <HealthHub client:load initialWorkspace="patient" />
+</BaseLayout>

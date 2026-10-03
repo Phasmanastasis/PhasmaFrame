@@ -4,8 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && if [ -d ../patient ]; then pnpm --dir ../patient run build && cp ../patient/dist/index.html dist/index.html && rm -rf dist/_expo && cp -R ../patient/dist/_expo dist/_expo && mkdir -p dist/assets && cp -R ../patient/dist/assets/. dist/assets/; fi",
+    "build": "astro build",
     "check": "astro check",
+    "test": "node --import tsx --test \"test/*.test.ts\"",
     "cf:dev": "wrangler pages dev",
     "cf:deploy": "wrangler pages deploy dist --project-name=kasigla"
   },
@@ -24,6 +25,7 @@
     "autoprefixer": "^10.6.1",
     "postcss": "^8.5.28",
     "tailwindcss": "^3.4.19",
+    "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "wrangler": "^4.68.0"
   }

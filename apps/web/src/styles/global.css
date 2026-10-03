@@ -16,6 +16,7 @@
 html {
   min-width: 320px;
   background: #f2f4ef;
+  scrollbar-color: #a8bbb0 #f2f4ef;
 }
 
 body {
@@ -26,6 +27,40 @@ button,
 input,
 textarea {
   font: inherit;
+}
+
+::selection {
+  color: #173b32;
+  background: #cfe8dc;
+}
+
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid #28675c;
+  outline-offset: 3px;
+}
+
+input,
+textarea {
+  caret-color: #285d50;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f2f4ef;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid #f2f4ef;
+  border-radius: 999px;
+  background: #a8bbb0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #829e8e;
 }
 
 @media print {

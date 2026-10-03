@@ -33,6 +33,6 @@ The final 360×640 detector run reports two `transition: padding` findings. Brow
 
 - Expo SDK 51 is used because [Expo's SDK matrix](https://docs.expo.dev/versions/v51.0.0/) lists Android 6+, React Native 0.74, and API 34 for SDK 51. `expo prebuild --platform android --no-install` generated `android/build.gradle` with `minSdkVersion` defaulting to 23.
 - Tailwind 3.4 with PostCSS and Autoprefixer replaces Tailwind 4 so the web styling supports Android 6-era Chrome 106. Tailwind 4 requires Chrome 111 or newer according to its [browser compatibility guide](https://tailwindcss.com/docs/compatibility).
-- The Astro Pages build runs its normal build, exports this app for web, then stages `index.html`, `_expo/`, and Expo's font assets at the Pages root.
+- The Expo app exports a static web build under `apps/patient/dist`. (Historically the Astro Pages build staged this app's `index.html`, `_expo/`, and fonts at the Pages root so `/` served the patient app. As of PHASM-54 the web `/` serves the Astro role chooser instead — patient flow at `/patient`, BHW at `/bhw` — and the Astro build no longer copies the Expo app into `apps/web/dist`.)
 - Local exported web UI was checked at 360×640. A 119/78 reading saved to browser storage remained after reload, and the page had no horizontal overflow.
 - `adb` and `emulator` are not installed here. The minSdk was inspected in generated Gradle config, but native installation on Android 6 was not exercised.

@@ -17,8 +17,6 @@ type PatientRecord = {
   readings: PatientReading[];
 };
 
-type Props = { onChangeRole: () => void };
-
 const STORAGE_KEY = 'alaga-patient-demo';
 const TRANSFER_KEY = 'alaga-pending-transfer';
 const initialPatient: PatientRecord = {
@@ -47,7 +45,13 @@ function ReadingItem({ reading }: { reading: PatientReading }) {
   </li>;
 }
 
-export default function PatientFlow({ onChangeRole }: Props) {
+function PatientNavIcon({ name }: { name: 'home' | 'history' | 'send' }) {
+  if (name === 'home') return <svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9M9 20v-6h6v6"/></svg>;
+  if (name === 'history') return <svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>;
+  return <svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v4h16v-4"/></svg>;
+}
+
+export default function PatientFlow() {
   const [patient, setPatient] = useState(initialPatient);
   const [section, setSection] = useState<'home' | 'history' | 'add' | 'send'>('home');
   const [sent, setSent] = useState(false);
@@ -55,6 +59,7 @@ export default function PatientFlow({ onChangeRole }: Props) {
   const [ready, setReady] = useState(false);
   const [form, setForm] = useState({ systolic: '', diastolic: '', heartRate: '', measuredAt: nowLocal(), measuredBy: 'Lina Reyes' });
   const latest = patient.readings[0];
+  const todayLabel = new Date().toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' });
 
   useEffect(() => {
     try {
@@ -102,6 +107,7 @@ export default function PatientFlow({ onChangeRole }: Props) {
   const prepareTransfer = () => {
     try {
       localStorage.setItem(TRANSFER_KEY, JSON.stringify({ ...patient, followUp: 'Patient transfer', note: '', readings: patient.readings }));
+      setError('');
       setSent(true);
     } catch {
       setSent(false);
@@ -110,22 +116,15 @@ export default function PatientFlow({ onChangeRole }: Props) {
   };
 
   return <main className="min-h-screen bg-[#f2f4ef] text-[#202522]">
-    <div className="mx-auto min-h-screen max-w-6xl px-4 pb-10 sm:px-7 md:px-10">
-      <header className="flex min-h-[72px] items-center justify-between border-b border-[#e3e7df] bg-[#f8f9f5] px-1">
-        <div><p className="mb-0 text-sm font-semibold text-[#295d52]">Alaga · Patient record</p><p className="mb-0 mt-1 text-sm text-[#626a62]">Saved on this device</p></div>
-        <button type="button" onClick={onChangeRole} className="min-h-12 rounded-full px-4 text-base font-semibold text-[#285d50] underline underline-offset-4">Change role</button>
-      </header>
-
+    <header className="sticky top-0 z-10 flex min-h-[72px] flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-[#e3e7df] bg-[#f8f9f5] px-5 py-2 print:hidden md:px-10">
+      <div className="flex min-w-0 flex-1 items-center gap-3"><img src="/kasigla-logo.png" alt="" width="36" height="36" className="size-9 shrink-0 rounded-xl md:hidden" /><div className="min-w-0"><p className="mb-0 text-xs font-medium text-[#606a62]">{patient.area} <span className="px-1">·</span> {todayLabel}</p><h1 className="mb-0 mt-0.5 text-[17px] font-semibold tracking-tight text-[#242a26] md:text-lg">Record History</h1></div></div>
+      <span className="ml-auto hidden shrink-0 text-sm font-semibold text-[#424a43] sm:inline">{patient.name}</span>
+    </header>
+    <div className="mx-auto min-h-screen max-w-6xl px-4 pb-28 sm:px-7 md:px-10">
       <div className="mx-auto max-w-4xl pt-7 md:pt-10">
-        <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
-          <div><h1 className="mb-1 text-3xl font-semibold tracking-tight text-[#243e35] sm:text-4xl">Hello, {patient.name.split(' ')[0]}</h1><p className="mb-0 text-base leading-7 text-[#525f55]">Your readings stay on this device until you prepare them for your BHW.</p></div>
-          <span className="rounded-full bg-[#e4f1e9] px-4 py-2 text-sm font-semibold text-[#315b49]">Offline record</span>
-        </div>
-
-        <nav aria-label="Patient record" className="mb-6 flex flex-wrap gap-2 border-b border-[#dfe4dc] pb-3">
-          {([['home', 'Overview'], ['history', 'Reading history'], ['add', 'Add a reading'], ['send', 'Prepare for BHW']] as const).map(([id, label]) => <button key={id} type="button" onClick={() => { setSection(id); setSent(false); setError(''); }} aria-current={section === id ? 'page' : undefined} className={`min-h-12 rounded-full px-4 text-base font-semibold ${section === id ? 'bg-[#dcece4] text-[#24584d]' : 'text-[#525d54] hover:bg-[#e9ede7]'}`}>{label}</button>)}
+        <nav aria-label="Patient sections" className="mb-6 hidden flex-wrap gap-2 border-b border-[#dfe4dc] pb-3 md:flex">
+          {([['home', 'Overview'], ['history', 'Reading history'], ['add', 'Add a reading'], ['send', 'Prepare for BHW']] as const).map(([id, label]) => <button key={id} type="button" onClick={() => { setSection(id); setSent(false); setError(''); }} aria-current={section === id ? 'page' : undefined} className={`min-h-11 rounded-full px-4 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#28675c] ${section === id ? 'bg-[#dcece4] text-[#24584d]' : 'text-[#525d54] hover:bg-[#e9ede7]'}`}>{label}</button>)}
         </nav>
-
         {section === 'home' && <div className="grid gap-6 lg:grid-cols-[1.4fr_.8fr]">
           <section className="rounded-3xl bg-white p-5 sm:p-7">
             <h2 className="mb-1 text-xl font-semibold text-[#303731]">Most recent reading</h2>
@@ -143,22 +142,27 @@ export default function PatientFlow({ onChangeRole }: Props) {
         {section === 'history' && <section className="rounded-3xl bg-white p-5 sm:p-7"><h2 className="mb-1 text-2xl font-semibold">Reading history</h2><p className="mb-3 text-base leading-7 text-[#626a62]">Your saved blood pressure and heart-rate values.</p><ul className="m-0 list-none p-0">{patient.readings.map(reading => <ReadingItem key={reading.id} reading={reading}/>)}</ul>{patient.readings.length === 0 && <p className="mb-0 py-8 text-base">No readings saved. Add one when you have a measured value.</p>}</section>}
 
         {section === 'add' && <section className="max-w-2xl rounded-3xl bg-white p-5 sm:p-7"><h2 className="mb-1 text-2xl font-semibold">Add a reading</h2><p className="mb-6 text-base leading-7 text-[#626a62]">Enter the values shown by your blood pressure monitor. This app does not measure your blood pressure.</p><form noValidate onSubmit={saveReading} className="space-y-5">
-          <div className="grid gap-4 sm:grid-cols-3"><label className="text-base font-semibold">Top number <span className="block text-sm font-normal text-[#626a62]">Systolic · mmHg</span><input type="number" inputMode="numeric" min="50" max="300" required value={form.systolic} onChange={event => setForm({ ...form, systolic: event.target.value })} placeholder="120" className="mt-2 min-h-14 w-full rounded-xl border border-[#aab5aa] bg-white px-4 text-xl outline-none focus:border-[#366b60] focus:ring-2 focus:ring-[#b4d2c2]" /></label>
-            <label className="text-base font-semibold">Bottom number <span className="block text-sm font-normal text-[#626a62]">Diastolic · mmHg</span><input type="number" inputMode="numeric" min="30" max="200" required value={form.diastolic} onChange={event => setForm({ ...form, diastolic: event.target.value })} placeholder="80" className="mt-2 min-h-14 w-full rounded-xl border border-[#aab5aa] bg-white px-4 text-xl outline-none focus:border-[#366b60] focus:ring-2 focus:ring-[#b4d2c2]" /></label>
-            <label className="text-base font-semibold">Heart rate <span className="block text-sm font-normal text-[#626a62]">Beats per minute</span><input type="number" inputMode="numeric" min="20" max="250" required value={form.heartRate} onChange={event => setForm({ ...form, heartRate: event.target.value })} placeholder="72" className="mt-2 min-h-14 w-full rounded-xl border border-[#aab5aa] bg-white px-4 text-xl outline-none focus:border-[#366b60] focus:ring-2 focus:ring-[#b4d2c2]" /></label></div>
-          <label className="block text-base font-semibold">When was it measured?<input type="datetime-local" required value={form.measuredAt} onChange={event => setForm({ ...form, measuredAt: event.target.value })} className="mt-2 min-h-14 w-full rounded-xl border border-[#aab5aa] bg-white px-4 text-base font-normal outline-none focus:border-[#366b60] focus:ring-2 focus:ring-[#b4d2c2]" /></label>
-          <label className="block text-base font-semibold">Who measured it?<input required value={form.measuredBy} onChange={event => setForm({ ...form, measuredBy: event.target.value })} className="mt-2 min-h-14 w-full rounded-xl border border-[#aab5aa] bg-white px-4 text-base font-normal outline-none focus:border-[#366b60] focus:ring-2 focus:ring-[#b4d2c2]" /></label>
+          <div className="grid gap-4 sm:grid-cols-3"><label className="text-base font-semibold">Top number <span className="block text-sm font-normal text-[#626a62]">Systolic · mmHg</span><input type="number" inputMode="numeric" min="50" max="300" required value={form.systolic} onChange={event => { setForm({ ...form, systolic: event.target.value }); setError(""); }} placeholder="120" className="mt-2 min-h-14 w-full rounded-xl border border-[#aab5aa] bg-white px-4 text-xl outline-none focus:border-[#366b60] focus:ring-2 focus:ring-[#b4d2c2]" /></label>
+            <label className="text-base font-semibold">Bottom number <span className="block text-sm font-normal text-[#626a62]">Diastolic · mmHg</span><input type="number" inputMode="numeric" min="30" max="200" required value={form.diastolic} onChange={event => { setForm({ ...form, diastolic: event.target.value }); setError(""); }} placeholder="80" className="mt-2 min-h-14 w-full rounded-xl border border-[#aab5aa] bg-white px-4 text-xl outline-none focus:border-[#366b60] focus:ring-2 focus:ring-[#b4d2c2]" /></label>
+            <label className="text-base font-semibold">Heart rate <span className="block text-sm font-normal text-[#626a62]">Beats per minute</span><input type="number" inputMode="numeric" min="20" max="250" required value={form.heartRate} onChange={event => { setForm({ ...form, heartRate: event.target.value }); setError(""); }} placeholder="72" className="mt-2 min-h-14 w-full rounded-xl border border-[#aab5aa] bg-white px-4 text-xl outline-none focus:border-[#366b60] focus:ring-2 focus:ring-[#b4d2c2]" /></label></div>
+          <label className="block text-base font-semibold">When was it measured?<input type="datetime-local" required value={form.measuredAt} onChange={event => { setForm({ ...form, measuredAt: event.target.value }); setError(""); }} className="mt-2 min-h-14 w-full rounded-xl border border-[#aab5aa] bg-white px-4 text-base font-normal outline-none focus:border-[#366b60] focus:ring-2 focus:ring-[#b4d2c2]" /></label>
+          <label className="block text-base font-semibold">Who measured it?<input required value={form.measuredBy} onChange={event => { setForm({ ...form, measuredBy: event.target.value }); setError(""); }} className="mt-2 min-h-14 w-full rounded-xl border border-[#aab5aa] bg-white px-4 text-base font-normal outline-none focus:border-[#366b60] focus:ring-2 focus:ring-[#b4d2c2]" /></label>
           {error && <p role="alert" className="mb-0 text-base font-medium text-[#8b3f32]">{error}</p>}
           <div className="flex flex-wrap gap-3 border-t border-[#e7eae4] pt-5"><button type="submit" className="min-h-14 rounded-full bg-[#366b60] px-6 text-base font-semibold text-white hover:bg-[#28594f]">Save reading</button><button type="button" onClick={() => setSection('home')} className="min-h-14 rounded-full px-6 text-base font-semibold text-[#3e4840] underline underline-offset-4">Cancel</button></div>
         </form></section>}
 
         {section === 'send' && <section className="max-w-3xl rounded-3xl bg-white p-5 sm:p-7"><h2 className="mb-2 text-2xl font-semibold">Review your record</h2><p className="mb-5 text-base leading-7 text-[#626a62]">Check what you are preparing for {patient.name}’s BHW. You can still cancel.</p><div className="flex flex-wrap gap-x-8 gap-y-2 border-y border-[#e7eae4] py-4 text-base"><p className="mb-0"><span className="font-semibold">Patient:</span> {patient.name} · {patient.id}</p><p className="mb-0"><span className="font-semibold">Readings:</span> {patient.readings.length}</p></div><ul className="mb-5 mt-0 list-none p-0">{patient.readings.slice(0, 3).map(reading => <ReadingItem key={reading.id} reading={reading}/>)}</ul>
-          {sent ? <div role="status" className="rounded-2xl bg-[#e4f1e9] p-5"><h3 className="mb-2 text-lg font-semibold text-[#315b49]">Record prepared for your BHW</h3><p className="mb-0 text-base leading-7 text-[#405d4b]">This prototype keeps the demo record in this browser. It does not send data to another device.</p></div> : <div className="flex flex-wrap gap-3"><button type="button" onClick={prepareTransfer} className="min-h-14 rounded-full bg-[#366b60] px-6 text-base font-semibold text-white hover:bg-[#28594f]">Prepare record for BHW</button><button type="button" onClick={() => setSection('home')} className="min-h-14 rounded-full px-5 text-base font-semibold text-[#3e4840] underline underline-offset-4">Cancel</button></div>}
+          {sent ? <div role="status" className="rounded-2xl bg-[#e4f1e9] px-4 py-3"><h3 className="m-0 text-base font-semibold text-[#315b49]">Record prepared for your BHW</h3></div> : <div className="flex flex-wrap gap-3"><button type="button" onClick={prepareTransfer} className="min-h-14 rounded-full bg-[#366b60] px-6 text-base font-semibold text-white hover:bg-[#28594f]">Prepare record for BHW</button><button type="button" onClick={() => setSection('home')} className="min-h-14 rounded-full px-5 text-base font-semibold text-[#3e4840] underline underline-offset-4">Cancel</button></div>}
           {error && <p role="alert" className="mb-0 mt-3 text-base font-medium text-[#8b3f32]">{error}</p>}
         </section>}
 
-        <p className="mb-0 mt-7 max-w-3xl text-sm leading-6 text-[#626a62]">All records here are synthetic demo data. This screen stores entries in this browser only. It does not diagnose or recommend treatment.</p>
       </div>
     </div>
+    <nav aria-label="Patient sections" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-3 border-t border-[#e1e5de] bg-[#f8f9f5] px-2 pb-[env(safe-area-inset-bottom)] pt-2 md:hidden print:hidden">
+        {([['home', 'Overview'], ['history', 'Reading history'], ['send', 'Prepare for BHW']] as const).map(([id, label]) => {
+          const isCurrent = section === id || (id === 'home' && section === 'add');
+          return <button key={id} type="button" onClick={() => { setSection(id); setSent(false); setError(''); }} aria-current={isCurrent ? 'page' : undefined} className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#285d50] focus-visible:ring-offset-2 ${isCurrent ? 'text-[#285d50]' : 'text-[#747a73]'}`}><span className={`grid h-8 min-w-14 place-items-center rounded-full ${isCurrent ? 'bg-[#dcece4]' : ''}`}><PatientNavIcon name={id}/></span>{label}</button>;
+        })}
+    </nav>
   </main>;
 }

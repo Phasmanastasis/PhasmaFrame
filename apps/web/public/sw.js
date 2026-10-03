@@ -1,7 +1,7 @@
 // Kasigla service worker — static, root scope ("/").
 // Hand-written plain JS (copied verbatim from public/ to dist/sw.js at build time).
 
-const CACHE_VERSION = 'kasigla-pwa-v1';
+const CACHE_VERSION = 'kasigla-pwa-v2';
 
 // App shell precached on install. All absolute, "/"-rooted URLs.
 const APP_SHELL = [
@@ -9,6 +9,10 @@ const APP_SHELL = [
   '/about',
   '/offline',
   '/manifest.webmanifest',
+  '/manifest-patient.webmanifest',
+  '/manifest-bhw.webmanifest',
+  '/patient',
+  '/bhw',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/maskable-512.png',
@@ -67,7 +71,8 @@ self.addEventListener('fetch', (event) => {
   // offline so ApiStatus can show its error state.
   if (sameOrigin && url.pathname.startsWith('/api/')) return;
 
-  // Navigation requests: network-first, fall back to cached /offline.
+  // Navigation requests: network-first, then use the exact cached URL or its
+  // clean-URL slash alias before falling back to /offline.
   if (request.mode === 'navigate') {
     event.respondWith(networkFirstNavigation(request));
     return;
@@ -93,7 +98,7 @@ async function networkFirstNavigation(request) {
     }
     return response;
   } catch (err) {
-    const cached = await safeMatch(request);
+    const cached = await safeMatchNavigation(request);
     if (cached) return cached;
     const offline = await safeMatch('/offline');
     if (offline) return offline;
@@ -102,6 +107,28 @@ async function networkFirstNavigation(request) {
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
   }
+}
+
+async function safeMatchNavigation(request) {
+  const cached = await safeMatch(request);
+  if (cached) return cached;
+
+  // Astro emits clean routes such as /patient/index.html, while hosts and
+  // browsers may request either /patient or /patient/ for that route.
+  const url = new URL(request.url);
+  const aliases = [];
+  if (url.pathname !== '/' && url.pathname.endsWith('/')) {
+    aliases.push(`${url.origin}${url.pathname.slice(0, -1)}${url.search}`);
+  } else if (url.pathname !== '/') {
+    aliases.push(`${url.origin}${url.pathname}/${url.search}`);
+  }
+
+  for (const alias of aliases) {
+    const match = await safeMatch(alias);
+    if (match) return match;
+  }
+
+  return undefined;
 }
 
 async function staleWhileRevalidate(request) {

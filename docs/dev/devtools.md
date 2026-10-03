@@ -142,15 +142,15 @@ Each workspace has its own scripts (not called directly in day-to-day work):
 - `apps/api`: `dev` (`tsx watch src/index.ts`), `build` (`tsc`), `check` (`tsc --noEmit`),
   `db:generate` (`prisma generate`), `db:migrate` (`prisma migrate dev`),
   `test` (`node --import tsx --test`).
-- `apps/web`: `dev` (`astro dev`), `check` (`astro check`), `build` (`astro build`,
-  then exports and stages the sibling Expo patient web app when `apps/patient` exists). No
-  `test` script — web is UI-only (see [testing.md](./testing.md)).
-- `apps/patient`: `dev` (`expo start`), `build` (`expo export --platform web`),
-  `check` (`tsc --noEmit`). Start the Expo web preview on port 4322 with
-  `pnpm --filter @app/patient dev -- --web --port 4322`. The app uses Expo SDK 51 / React Native 0.74 to target Android 6+ (API 23).
+- `apps/web`: `dev` (`astro dev`), `check` (`astro check`), `build` (`astro build`),
+  `test` (route map only). `/patient` and `/bhw` are separate role home screens and
+  installable PWAs with distinct manifests, start URLs, and scopes; the service worker
+  precaches both. See
+  [testing.md](./testing.md) for web coverage limits.
 - `packages/shared`: `build` / `check` (`tsc --noEmit`), `test` (`node --import tsx --test`).
-- `apps/mobile`: `check` (`tsc --noEmit`), `test` (`node --import tsx --test`), plus Expo
-  dev/export scripts.
+- `apps/mobile`: `dev` (`expo start`), `web` (`expo start --web`), `build:web`
+  (`expo export --platform web`), `check` (`tsc --noEmit`), and
+  `test` (`node --import tsx --test`).
 
 ## Prisma
 
