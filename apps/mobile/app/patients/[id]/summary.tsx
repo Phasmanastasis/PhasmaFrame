@@ -24,10 +24,10 @@ export default function RhuSummary() {
   const [csv, setCsv] = useState<string | null>(null);
 
   return (
-    <ScrollView style={styles.screen}>
+    <ScrollView style={styles.scrollScreen} contentContainerStyle={styles.scrollContent}>
       <Text style={styles.title}>{patient?.label ?? id}</Text>
       <Text style={styles.subtitle}>
-        Review and export only. This screen does not send data to an RHU.
+        A summary to review with a health worker. This screen does not send data to a clinic.
       </Text>
 
       <View style={styles.card}>
@@ -37,17 +37,21 @@ export default function RhuSummary() {
 
       <TouchableOpacity
         style={styles.button}
+        accessibilityRole="button"
+        accessibilityLabel="Show a CSV summary preview"
         onPress={() => setCsv(toCsv(readings))}
       >
-        <Text style={styles.buttonText}>Export summary as CSV</Text>
+        <Text style={styles.buttonText}>Prepare CSV summary</Text>
       </TouchableOpacity>
 
       {csv ? (
         <View style={[styles.card, { marginTop: 12 }]}>
-          <Text style={styles.ok}>CSV generated:</Text>
+          <Text style={styles.ok}>CSV preview is ready</Text>
+          <Text style={styles.cardMeta}>Press and hold the text to select or copy it.</Text>
           <Text
-            style={{ color: theme.textMuted, fontFamily: "monospace", fontSize: 12, marginTop: 6 }}
+            style={{ color: theme.text, fontFamily: "monospace", fontSize: 16, lineHeight: 24, marginTop: 12 }}
             selectable
+            accessibilityLabel="CSV summary preview"
           >
             {csv}
           </Text>

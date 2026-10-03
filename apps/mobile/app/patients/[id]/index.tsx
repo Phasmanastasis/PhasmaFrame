@@ -14,7 +14,8 @@ export default function PatientSummary() {
   if (!patient) {
     return (
       <View style={styles.screen}>
-        <Text style={styles.error}>Patient not found.</Text>
+        <Text style={styles.title}>Record not found</Text>
+        <Text style={styles.error}>Go back to the patient list and choose a record again.</Text>
       </View>
     );
   }
@@ -22,26 +23,28 @@ export default function PatientSummary() {
   const latest = readings[0];
 
   return (
-    <ScrollView style={styles.screen}>
+    <ScrollView style={styles.scrollScreen} contentContainerStyle={styles.scrollContent}>
       <Text style={styles.title}>{patient.label}</Text>
-      <Text style={styles.subtitle}>Local ID: {patient.id}</Text>
+      <Text style={styles.subtitle}>Record ID: {patient.id}</Text>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Latest reading</Text>
+        <Text style={styles.cardTitle}>Most recent reading</Text>
         {latest ? (
-          <Text style={styles.cardMeta}>
-            {latest.systolic}/{latest.diastolic} mmHg ·{" "}
-            {new Date(latest.measuredAt).toLocaleDateString()} · measured by{" "}
-            {latest.measuredBy}
-          </Text>
+          <>
+            <Text accessibilityLabel={`Blood pressure ${latest.systolic} over ${latest.diastolic} millimeters of mercury`} style={{ color: theme.text, fontSize: 36, lineHeight: 44, fontWeight: "700", marginTop: 10 }}>
+              {latest.systolic}/{latest.diastolic} <Text style={{ fontSize: 18, fontWeight: "600" }}>mmHg</Text>
+            </Text>
+            <Text style={styles.cardMeta}>{new Date(latest.measuredAt).toLocaleString()}</Text>
+            <Text style={styles.cardMeta}>Measured by {latest.measuredBy === "bhw" ? "health worker" : "patient or caregiver"}</Text>
+          </>
         ) : (
-          <Text style={styles.cardMeta}>No readings yet.</Text>
+          <Text style={styles.cardMeta}>No readings recorded yet. Add a reading from your blood pressure monitor.</Text>
         )}
       </View>
 
       <Link href={`/patients/${id}/history${roleParam}`} asChild>
         <TouchableOpacity style={styles.buttonAlt}>
-          <Text style={styles.buttonAltText}>Reading history</Text>
+          <Text style={styles.buttonAltText}>View all readings</Text>
         </TouchableOpacity>
       </Link>
 
@@ -74,8 +77,8 @@ export default function PatientSummary() {
         </Link>
       )}
 
-      <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 16 }}>
-        Data stays on this device except during a confirmed transfer.
+      <Text style={[styles.cardMeta, { marginTop: 20 }]}>
+        Your record stays on this device. It is shared only when you confirm a transfer.
       </Text>
     </ScrollView>
   );

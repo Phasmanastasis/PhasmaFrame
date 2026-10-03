@@ -10,7 +10,10 @@ export default function ReadingHistory() {
   return (
     <View style={styles.screen}>
       {readings.length === 0 ? (
-        <Text style={styles.subtitle}>No readings recorded yet.</Text>
+        <View>
+          <Text style={styles.title}>No readings yet</Text>
+          <Text style={styles.subtitle}>Saved blood pressure readings will appear here with their date and who entered them.</Text>
+        </View>
       ) : (
         <FlatList
           data={readings}
@@ -24,7 +27,7 @@ export default function ReadingHistory() {
                 {new Date(item.measuredAt).toLocaleString()}
               </Text>
               <Text style={styles.cardMeta}>
-                Measured by {item.measuredBy} · entered by {item.recordedBy}
+                Measured by {item.measuredBy === "bhw" ? "health worker" : "patient or caregiver"} · entered by {item.recordedBy === "bhw" ? "health worker" : "patient or caregiver"}
               </Text>
               {item.note ? (
                 <Text style={styles.cardMeta}>Note: {item.note}</Text>

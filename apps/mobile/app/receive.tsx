@@ -28,16 +28,20 @@ export default function Receive() {
   }
 
   return (
-    <ScrollView style={styles.screen}>
-      <Text style={styles.title}>Receive record</Text>
+    <ScrollView style={styles.scrollScreen} contentContainerStyle={styles.scrollContent}>
+      <Text style={styles.title}>Receive a record</Text>
 
       {step === "discover" && (
         <>
           <Text style={styles.subtitle}>
-            Look for a nearby sender, then preview before importing.
+            Find a nearby sender. You can review the record before you add it.
           </Text>
-          <TouchableOpacity style={styles.button} onPress={onDiscover}>
-            <Text style={styles.buttonText}>Discover nearby device</Text>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Before you begin</Text>
+            <Text style={styles.cardMeta}>Demo mode uses a simulated nearby device. No second phone is needed. Nothing is added until you confirm.</Text>
+          </View>
+          <TouchableOpacity style={styles.button} onPress={onDiscover} accessibilityRole="button" accessibilityLabel="Find a nearby device to receive a patient record" accessibilityHint="Looks for a sender, then shows you a review screen.">
+            <Text style={styles.buttonText}>Find nearby device</Text>
           </TouchableOpacity>
         </>
       )}
@@ -45,50 +49,43 @@ export default function Receive() {
       {step === "preview" && incoming && (
         <>
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>{incoming.patient.label}</Text>
+            <Text style={styles.cardTitle} accessibilityRole="header">Review this patient record</Text>
+            <Text style={[styles.cardMeta, { fontWeight: "700" }]}>{incoming.patient.label}</Text>
             <Text style={styles.cardMeta}>Local ID: {incoming.patient.id}</Text>
             <Text style={styles.cardMeta}>
-              {incoming.readings.length} readings · {incoming.visitNotes.length}{" "}
-              notes
+              {incoming.readings.length} readings and {incoming.visitNotes.length} notes
             </Text>
-            <Text style={[styles.cardMeta, { marginTop: 6 }]}>
-              Duplicate IDs are skipped; existing entries are never overwritten.
+            <Text style={[styles.cardMeta, { marginTop: 12 }]}>
+              Duplicate items will be skipped. Existing information will not be changed.
             </Text>
           </View>
-          <TouchableOpacity style={styles.button} onPress={onConfirmImport}>
-            <Text style={styles.buttonText}>Confirm import</Text>
+          <TouchableOpacity style={styles.button} onPress={onConfirmImport} accessibilityRole="button" accessibilityLabel={`Confirm and add ${incoming.patient.label}'s patient record`} accessibilityHint="Adds new readings and notes. Existing items are kept unchanged.">
+            <Text style={styles.buttonText}>Confirm and add record</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.buttonAlt}
-            onPress={() => setStep("discover")}
-          >
-            <Text style={styles.buttonAltText}>Cancel</Text>
+          <TouchableOpacity style={styles.buttonAlt} onPress={() => setStep("discover")} accessibilityRole="button" accessibilityLabel="Cancel and return to device search">
+            <Text style={styles.buttonAltText}>Cancel and go back</Text>
           </TouchableOpacity>
         </>
       )}
 
       {step === "receipt" && result && (
-        <View style={styles.card}>
-          <Text style={styles.ok}>Import receipt</Text>
-          <Text style={styles.cardMeta}>Patient: {result.patientId}</Text>
+        <View style={styles.card} accessibilityLiveRegion="polite">
+          <Text style={styles.ok} accessibilityRole="header">Record received</Text>
+          <Text style={styles.cardMeta}>Patient ID: {result.patientId}</Text>
           <Text style={styles.cardMeta}>
-            Readings added {result.readingsAdded}, skipped{" "}
-            {result.readingsSkipped}
+            Readings: {result.readingsAdded} added, {result.readingsSkipped} already on this device
           </Text>
           <Text style={styles.cardMeta}>
-            Notes added {result.notesAdded}, skipped {result.notesSkipped}
+            Notes: {result.notesAdded} added, {result.notesSkipped} already on this device
           </Text>
-          <TouchableOpacity
-            style={styles.buttonAlt}
-            onPress={() => router.replace("/patients?role=bhw")}
-          >
+          <TouchableOpacity style={styles.buttonAlt} onPress={() => router.replace("/patients?role=bhw")} accessibilityRole="button" accessibilityLabel="Return to the patient list">
             <Text style={styles.buttonAltText}>Back to patients</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 16 }}>
-        Failed or invalid imports leave existing data unchanged.
+      <Text style={{ color: theme.textMuted, fontSize: 16, lineHeight: 24, marginTop: 16 }}>
+        If a record cannot be added, existing information stays unchanged.
       </Text>
     </ScrollView>
   );
