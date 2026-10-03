@@ -1,3 +1,4 @@
+import { RefreshCw, Smartphone } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
@@ -8,7 +9,12 @@ import {
   discoverDevices,
   sendBundle,
 } from "../../../src/domain/transport";
-import { styles, theme } from "../../../src/ui/theme";
+import {
+  OfflineBanner,
+  PrimaryButton,
+  SecondaryButton,
+} from "../../../src/ui/components";
+import { spacing, styles, theme } from "../../../src/ui/theme";
 
 export default function SendRecord() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -37,8 +43,11 @@ export default function SendRecord() {
     }
   }
 
+  const busy = phase === "connecting" || phase === "transferring";
+
   return (
     <ScrollView style={styles.screen}>
+      <OfflineBanner />
       <Text style={styles.title}>Send {patient?.label ?? id}</Text>
       <Text style={styles.subtitle}>
         One patient record per transfer. The receiver must confirm the import.
@@ -53,41 +62,43 @@ export default function SendRecord() {
           <TouchableOpacity
             key={d.id}
             style={styles.card}
+            accessibilityRole="button"
+            accessibilityLabel={`Send to ${d.name}`}
             onPress={() => onSend(d.id)}
-            disabled={phase === "connecting" || phase === "transferring"}
+            disabled={busy}
           >
-            <Text style={styles.cardTitle}>{d.name}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+              <Smartphone size={18} color={theme.accentActive} strokeWidth={2} />
+              <Text style={styles.cardTitle}>{d.name}</Text>
+            </View>
             <Text style={styles.cardMeta}>Tap to send to {d.id}</Text>
           </TouchableOpacity>
         ))}
 
-      {(phase === "connecting" || phase === "transferring") && (
-        <Text style={[styles.cardMeta, { color: theme.accent }]}>
+      {busy && (
+        <Text style={[styles.cardMeta, { color: theme.accentActive }]}>
           {phase === "connecting" ? "Connecting…" : "Transferring record…"}
         </Text>
       )}
 
       {phase === "done" && (
         <View style={styles.card}>
-          <Text style={styles.ok}>Transfer complete.</Text>
+          <Text style={styles.ok}>Transfer complete</Text>
           <Text style={styles.cardMeta}>
             The receiving device can now confirm the import.
           </Text>
-          <TouchableOpacity
-            style={styles.buttonAlt}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.buttonAltText}>Done</Text>
-          </TouchableOpacity>
+          <SecondaryButton label="Done" onPress={() => router.back()} />
         </View>
       )}
 
       {phase === "failed" && (
         <View style={styles.card}>
           <Text style={styles.error}>{error || "Transfer failed."}</Text>
-          <TouchableOpacity style={styles.button} onPress={() => onSend(devices[0]?.id ?? "")}>
-            <Text style={styles.buttonText}>Retry</Text>
-          </TouchableOpacity>
+          <PrimaryButton
+            label="Retry"
+            icon={RefreshCw}
+            onPress={() => onSend(devices[0]?.id ?? "")}
+          />
         </View>
       )}
     </ScrollView>

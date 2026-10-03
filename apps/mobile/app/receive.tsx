@@ -1,10 +1,16 @@
+import { CheckCircle2, Radar } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import type { TransferBundle } from "../src/domain/models";
 import { getStore, type ImportResult } from "../src/domain/store";
 import { exportSampleIncoming } from "../src/domain/demo";
-import { styles, theme } from "../src/ui/theme";
+import {
+  OfflineBanner,
+  PrimaryButton,
+  SecondaryButton,
+} from "../src/ui/components";
+import { styles } from "../src/ui/theme";
 
 type Step = "discover" | "preview" | "receipt";
 
@@ -29,6 +35,7 @@ export default function Receive() {
 
   return (
     <ScrollView style={styles.screen}>
+      <OfflineBanner />
       <Text style={styles.title}>Receive record</Text>
 
       {step === "discover" && (
@@ -36,9 +43,11 @@ export default function Receive() {
           <Text style={styles.subtitle}>
             Look for a nearby sender, then preview before importing.
           </Text>
-          <TouchableOpacity style={styles.button} onPress={onDiscover}>
-            <Text style={styles.buttonText}>Discover nearby device</Text>
-          </TouchableOpacity>
+          <PrimaryButton
+            label="Discover nearby device"
+            icon={Radar}
+            onPress={onDiscover}
+          />
         </>
       )}
 
@@ -55,21 +64,17 @@ export default function Receive() {
               Duplicate IDs are skipped; existing entries are never overwritten.
             </Text>
           </View>
-          <TouchableOpacity style={styles.button} onPress={onConfirmImport}>
-            <Text style={styles.buttonText}>Confirm import</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.buttonAlt}
-            onPress={() => setStep("discover")}
-          >
-            <Text style={styles.buttonAltText}>Cancel</Text>
-          </TouchableOpacity>
+          <PrimaryButton label="Confirm import" onPress={onConfirmImport} />
+          <SecondaryButton label="Cancel" onPress={() => setStep("discover")} />
         </>
       )}
 
       {step === "receipt" && result && (
         <View style={styles.card}>
-          <Text style={styles.ok}>Import receipt</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <CheckCircle2 size={18} color="#0D9488" strokeWidth={2} />
+            <Text style={styles.ok}>Import receipt</Text>
+          </View>
           <Text style={styles.cardMeta}>Patient: {result.patientId}</Text>
           <Text style={styles.cardMeta}>
             Readings added {result.readingsAdded}, skipped{" "}
@@ -78,16 +83,14 @@ export default function Receive() {
           <Text style={styles.cardMeta}>
             Notes added {result.notesAdded}, skipped {result.notesSkipped}
           </Text>
-          <TouchableOpacity
-            style={styles.buttonAlt}
+          <SecondaryButton
+            label="Back to patients"
             onPress={() => router.replace("/patients?role=bhw")}
-          >
-            <Text style={styles.buttonAltText}>Back to patients</Text>
-          </TouchableOpacity>
+          />
         </View>
       )}
 
-      <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 16 }}>
+      <Text style={styles.hint}>
         Failed or invalid imports leave existing data unchanged.
       </Text>
     </ScrollView>
