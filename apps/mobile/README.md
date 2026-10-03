@@ -20,7 +20,7 @@ web target enabled so it also runs as a PWA alongside the Astro web app.
   - `validation.ts` — reading validation + local-ID generation.
   - `seed.ts` / `demo.ts` — synthetic records only; no national ID is collected.
 
-## Screens (mirror `docs/app-sitemap.md`)
+## Screens (mirror the site map in `docs/sdd.md`)
 
 - `/` — role choice (patient/caregiver vs BHW)
 - `/patients` — patient list
