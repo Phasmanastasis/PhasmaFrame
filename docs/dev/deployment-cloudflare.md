@@ -87,6 +87,18 @@ project. For a brand-new project, create it first:
 npx wrangler pages project create kasigla --production-branch master
 ```
 
+### Pull request previews — `phasmaframe-web`
+
+The `phasmaframe-web` Pages project is connected to `Phasmanastasis/PhasmaFrame` in the
+`magallanes` Cloudflare account. Git integration builds pull requests and other branches
+as public previews, and posts preview links on pull requests. Production deployments from
+`master` are disabled for this project.
+
+Pages builds from the repository root with `pnpm --filter @app/web run build` and publishes
+`apps/web/dist`. The preview branch setting is `all`. Push a branch commit to trigger a
+preview deployment. Use Git integration for PR previews; `cf-deploy-web` remains the
+Wrangler upload path for the existing `kasigla` Pages project.
+
 ## Secrets
 
 - Never commit or print `CLOUDFLARE_API_TOKEN` or any account credential. Refer to it by

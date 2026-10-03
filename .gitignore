@@ -14,6 +14,11 @@ apps/api/prisma/*.db
 apps/api/prisma/*.db-journal
 *.tsbuildinfo
 
+# Expo (apps/mobile) — generated build artifacts and local caches
+.expo/
+expo-env.d.ts
+apps/mobile/web-build/
+
 # Local agent tooling config (machine-specific, not shared)
 .kiro/settings/
 skills-lock.json
@@ -21,13 +26,13 @@ skills-lock.json
 # ==============================================================================
 # Section 2: gitignore.io template
 # ------------------------------------------------------------------------------
-# Generated from https://www.toptal.com/developers/gitignore/api/windows,linux,macos,astro,react
+# Generated from https://www.toptal.com/developers/gitignore/api/astro,linux,macos,react,windows,gradle
 # Do not edit by hand; regenerate from gitignore.io to update. Put custom rules
 # in Section 1 above instead.
 # ==============================================================================
 
-# Created by https://www.toptal.com/developers/gitignore/api/windows,linux,macos,astro,react
-# Edit at https://www.toptal.com/developers/gitignore?templates=windows,linux,macos,astro,react
+# Created by https://www.toptal.com/developers/gitignore/api/astro,linux,macos,react,windows,gradle
+# Edit at https://www.toptal.com/developers/gitignore?templates=astro,linux,macos,react,windows,gradle
 
 ### Astro ###
 # Gitignore template for Astro projects
@@ -123,4 +128,31 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# End of https://www.toptal.com/developers/gitignore/api/windows,linux,macos,astro,react
+### Gradle ###
+.gradle
+**/build/
+!src/**/build/
+
+# Ignore Gradle GUI config
+gradle-app.setting
+
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+
+# Avoid ignore Gradle wrappper properties
+!gradle-wrapper.properties
+
+# Cache of project
+.gradletasknamecache
+
+# Eclipse Gradle plugin generated files
+# Eclipse Core
+.project
+# JDT-specific (Eclipse Java Development Tools)
+.classpath
+
+### Gradle Patch ###
+# Java heap dump
+*.hprof
+
+# End of https://www.toptal.com/developers/gitignore/api/astro,linux,macos,react,windows,gradle

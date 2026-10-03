@@ -1,16 +1,8 @@
 ---
-import ApiStatus from '../components/ApiStatus';
+import HealthHub from '../components/HealthHub';
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Full-stack starter">
-  <main class="mx-auto max-w-3xl px-6 py-20">
-    <img src="/kasigla-logo.png" alt="Kasigla logo" width="64" height="64" class="h-16 w-16 rounded-xl" />
-    <p class="mt-6 text-sm font-semibold uppercase tracking-wider text-emerald-700">Starter workspace</p>
-    <h1 class="mt-3 text-4xl font-semibold tracking-tight">A clean foundation for your next app.</h1>
-    <p class="mt-4 max-w-xl leading-7 text-slate-600">
-      Astro and React on the frontend, Hono and Prisma on the backend, with shared Zod contracts.
-    </p>
-    <ApiStatus client:load />
-  </main>
+<BaseLayout title="Alaga · Offline BP follow-up">
+  <HealthHub client:load />
 </BaseLayout>

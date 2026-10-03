@@ -1,12 +1,12 @@
 {
-  "name": "Kasigla",
-  "short_name": "Kasigla",
-  "description": "Offline-first hypertension follow-up companion for staying on top of your care.",
+  "name": "Alaga Offline BP Follow-up",
+  "short_name": "Alaga",
+  "description": "An offline-first blood pressure follow-up record for patients, caregivers, and barangay health workers.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#047857",
+  "background_color": "#f2f4ef",
+  "theme_color": "#f8f9f5",
   "orientation": "any",
   "icons": [
     {

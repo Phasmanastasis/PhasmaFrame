@@ -125,7 +125,7 @@ wraps these rather than duplicating them.
 | `db:generate` | `pnpm --filter @app/api db:generate`                   | CI, `just db-generate`             |
 | `db:migrate`  | `pnpm --filter @app/api db:migrate`                    | README, `just db-migrate`          |
 
-Per-app dev commands (`pnpm --filter @app/api dev` / `@app/web dev`) are invoked directly
+Per-app dev commands (`pnpm --filter @app/api dev` / `@app/web dev` / `@app/patient dev`) are invoked directly
 by the `dev-api` / `dev-web` recipes, so there are no `dev:api` / `dev:web` scripts to keep
 in sync.
 
@@ -133,7 +133,11 @@ Each workspace has its own scripts (not called directly in day-to-day work):
 
 - `apps/api`: `dev` (`tsx watch src/index.ts`), `build` (`tsc`), `check` (`tsc --noEmit`),
   `db:generate` (`prisma generate`), `db:migrate` (`prisma migrate dev`).
-- `apps/web`: `dev` (`astro dev`), `build` (`astro build`), `check` (`astro check`).
+- `apps/web`: `dev` (`astro dev`), `check` (`astro check`), `build` (`astro build`,
+  then exports and stages the sibling Expo patient web app when `apps/patient` exists).
+- `apps/patient`: `dev` (`expo start`), `build` (`expo export --platform web`),
+  `check` (`tsc --noEmit`). Start the Expo web preview on port 4322 with
+  `pnpm --filter @app/patient dev -- --web --port 4322`. The app uses Expo SDK 51 / React Native 0.74 to target Android 6+ (API 23).
 - `packages/shared`: `build` / `check` (`tsc --noEmit`).
 
 ## Prisma
@@ -212,6 +216,37 @@ just cf-deploy-web     # build + deploy the web app to Pages
 Config lives in `apps/api/wrangler.jsonc` and `apps/web/wrangler.jsonc`; D1 schema is in
 `apps/api/migrations/` (Prisma Migrate does not support D1). Full flow, prerequisites, and
 the live URLs: `docs/dev/deployment-cloudflare.md`.
+
+## k6 (API smoke and load checks)
+
+[k6](https://grafana.com/docs/k6/latest/set-up/install-k6/) is an external CLI; it is not
+installed through pnpm. `tests/k6/api.js` checks the API health response and reads the
+examples list. Both requests are read-only.
+
+Start the API against local D1 in one terminal:
+
+```bash
+just cf-migrate-local   # first run only; creates/applies migrations to local D1
+just cf-dev-api         # Wrangler listens on http://localhost:8787
+```
+
+Run the smoke check from another terminal:
+
+```bash
+k6 run -e BASE_URL=http://localhost:8787 -e PROFILE=smoke tests/k6/api.js
+```
+
+Run the light load profile against the same local API:
+
+```bash
+k6 run -e BASE_URL=http://localhost:8787 -e PROFILE=load tests/k6/api.js
+```
+
+Smoke uses one virtual user and one iteration. Load uses five virtual users for 30 seconds,
+with a one-second pause between iterations. Load checks currently require all checks to
+pass, fewer than 1% failed HTTP requests, and p95 latency below 500 ms. These are starter
+guardrails for local runs; compare results only under consistent conditions before treating
+latency as a service target. Do not aim the load profile at production.
 
 ## Keeping this in sync
 
