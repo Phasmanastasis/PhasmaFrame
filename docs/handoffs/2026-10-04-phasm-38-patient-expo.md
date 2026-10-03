@@ -23,3 +23,7 @@ This branch replaces the patient reading-entry portion of Kotlin PR #39 with an 
 ## Notes
 
 This is a local prototype. It does not diagnose, recommend treatment, or connect to a BHW device yet. Transfer status is a local demonstration state.
+
+## Detector outcome
+
+The detector's final run reports two `transition: padding` findings from the safe-area library's hidden zero-size inset sentinel. It has no visible size or content. Contrast and text-size findings were corrected and the final check/build pass.
