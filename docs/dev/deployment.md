@@ -76,3 +76,11 @@ look for:
 - **Deploy succeeds but the container is unhealthy** — check the compose healthcheck and
   the API logs in Komodo; verify `DATABASE_URL` and the data volume. See the Docker section
   in `devtools.md`.
+
+## Exit codes
+
+The `komodo-*` recipes exit **non-zero** when the Komodo API returns a non-2xx HTTP status
+or a JSON body with a top-level `error` (for example a wrong `KOMODO_STACK`, which returns
+HTTP 500 `did not find any Stack matching …`), and `komodo-deploy` also fails if
+`DeployStack` reports `success=false`. A successful `probe`/`status`/`deploy` exits 0.
+Error messages are written to stderr and never contain the API key or secret.
