@@ -26,8 +26,15 @@ textarea {
 }
 
 @media print {
+  @page { margin: 16mm; }
+
   body {
     background: white;
+    color: #17211d;
+  }
+
+  main {
+    background: white !important;
   }
 
   button,
