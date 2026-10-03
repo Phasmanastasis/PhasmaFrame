@@ -1,7 +1,38 @@
 const CACHE_NAME = 'alaga-shell-v1';
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.add('/')));
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    const response = await fetch('/');
+    await cache.put('/', response.clone());
+    const html = await response.text();
+    const assets = [...html.matchAll(/(?:src|href)=["']([^"']+)["']/g)]
+      .map(([, path]) => new URL(path, self.location.origin).href)
+      .filter(url => new URL(url).origin === self.location.origin);
+    const visited = new Set();
+
+    const cacheAsset = async url => {
+      if (visited.has(url)) return;
+      visited.add(url);
+      try {
+        const asset = await fetch(url);
+        if (!asset.ok) return;
+        await cache.put(url, asset.clone());
+        if (/\.m?js(?:$|\?)/.test(url)) {
+          const source = await asset.text();
+          const imports = [...source.matchAll(/(?:from\s*|import\s*\(\s*)["']([^"']+)["']/g)]
+            .map(([, path]) => new URL(path, url))
+            .filter(importUrl => importUrl.origin === self.location.origin)
+            .map(importUrl => importUrl.href);
+          await Promise.all(imports.map(cacheAsset));
+        }
+      } catch {
+        // A secondary asset can retry through the runtime cache on next use.
+      }
+    };
+
+    await Promise.all(assets.map(cacheAsset));
+  })());
   self.skipWaiting();
 });
 
