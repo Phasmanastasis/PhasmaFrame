@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import Nav from '../components/Nav.astro';
 
 interface Props {
   title: string;
@@ -12,12 +13,23 @@ const { title } = Astro.props;
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, viewport-fit=cover" />
     <meta name="description" content="Astro and Hono full-stack starter" />
     <link rel="icon" type="image/png" href="/kasigla-logo.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#047857" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Kasigla" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <title>{title}</title>
+    <script>
+      import '../scripts/register-sw.ts';
+    </script>
   </head>
   <body>
+    <Nav />
     <slot />
   </body>
 </html>
