@@ -237,3 +237,20 @@ All plugin and library versions are pinned in `apps/android/gradle/libs.versions
 
 The recipes wrap `apps/android/gradlew`; they do not duplicate Gradle command bodies.
 See [getting-started.md](./getting-started.md) for installing the JDK and Android SDK.
+
+### Local data model (Room/SQLite)
+
+The offline store (`apps/android/app/.../data`) implements the SDD ERD with Room:
+
+- Entities: `PatientEntity`, `BloodPressureReadingEntity`, `VisitNoteEntity` (plus the
+  `TransferBundle` domain model in `:core`). Measurer (`measured_by`) and recorder
+  (`entered_by`) are **distinct columns**; a `source` column keeps patient-entered vs
+  BHW-entered data distinguishable.
+- DAOs insert **append-only** (`OnConflictStrategy.IGNORE`): re-inserting an existing id
+  is ignored, never overwritten — the basis for repeat-safe import.
+- `PhasmaFrameDatabase` exports versioned schema JSON to `app/schemas/` (committed) and
+  registers a `MIGRATIONS` array; destructive fallback is intentionally **not** used so
+  readings survive upgrades.
+- Pure domain models and the provenance string codec live in `:core` and are
+  JVM-unit-tested; the Room DAO behaviour (save/reopen, append-only) is covered by an
+  instrumented test (`just android-connected-test`, needs a device).

@@ -30,6 +30,11 @@ android {
         versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        ksp {
+            // Export versioned Room schema JSON so migrations can be validated.
+            arg("room.schemaLocation", "$projectDir/schemas")
+        }
     }
 
     buildTypes {

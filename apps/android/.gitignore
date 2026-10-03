@@ -18,4 +18,5 @@ captures/
 *.hprof
 
 # KSP / generated
-app/schemas/
+# NOTE: app/schemas/ (Room exported schema JSON) is intentionally NOT ignored — it is
+# committed so migrations can be validated against versioned baselines.
