@@ -1,60 +1,44 @@
-import { Inbox } from "lucide-react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { FlatList, Text, View } from "react-native";
+import { Link, useLocalSearchParams } from "expo-router";
+import { FlatList, Text, TouchableOpacity, View } from "react-native";
 import { getStore } from "../../src/domain/store";
-import {
-  EmptyState,
-  PatientListItem,
-  ScreenContainer,
-  SecondaryButton,
-} from "../../src/ui/components";
-import { styles } from "../../src/ui/theme";
+import { styles, theme } from "../../src/ui/theme";
 
 export default function PatientList() {
   const { role } = useLocalSearchParams<{ role?: string }>();
-  const router = useRouter();
   const patients = getStore().listPatients();
   const roleParam = role ? `?role=${role}` : "";
-  const isBhw = role === "bhw";
 
   return (
-    <ScreenContainer>
+    <View style={styles.screen}>
+      <Text style={styles.title}>Patients</Text>
       <Text style={styles.subtitle}>
-        {isBhw ? "BHW view" : "Patient / caregiver view"} · {patients.length}{" "}
-        patients
+        {role === "bhw" ? "Health worker view" : "Patient and caregiver view"}. {patients.length} records on this device.
       </Text>
-
-      <View style={{ flex: 1 }}>
-        <FlatList
-          data={patients}
-          keyExtractor={(p) => p.id}
-          ListEmptyComponent={
-            <EmptyState
-              title="No patients yet"
-              message="Patient records will appear here once added."
-            />
-          }
-          renderItem={({ item }) => (
-            <PatientListItem
-              label={item.label}
-              meta={`Local ID: ${item.id}`}
-              onPress={() => router.push(`/patients/${item.id}${roleParam}`)}
-            />
-          )}
-        />
-      </View>
-
-      {isBhw ? (
-        <SecondaryButton
-          label="Receive record"
-          icon={Inbox}
-          onPress={() => router.push("/receive")}
-        />
+      <FlatList
+        data={patients}
+        keyExtractor={(p) => p.id}
+        ListEmptyComponent={<Text style={styles.cardMeta}>No patient records yet.</Text>}
+        renderItem={({ item }) => (
+          <Link href={`/patients/${item.id}${roleParam}`} asChild>
+            <TouchableOpacity style={styles.card} accessibilityRole="button" accessibilityLabel={`Open record for ${item.label}`} accessibilityHint="Shows blood pressure readings and record actions">
+              <Text style={styles.cardTitle}>{item.label}</Text>
+              <Text style={styles.cardMeta}>Record ID: {item.id}</Text>
+              <Text style={[styles.cardMeta, { color: theme.accent, fontWeight: "700" }]}>Open record</Text>
+            </TouchableOpacity>
+          </Link>
+        )}
+      />
+      {role === "bhw" ? (
+        <Link href="/receive" asChild>
+          <TouchableOpacity style={styles.buttonAlt} accessibilityRole="button" accessibilityLabel="Receive a patient record">
+            <Text style={styles.buttonAltText}>Receive a record</Text>
+          </TouchableOpacity>
+        </Link>
       ) : (
-        <Text style={styles.hint}>
-          Open a patient to view readings or send their record.
+        <Text style={[styles.cardMeta, { marginTop: 8 }]}>
+          Open a record to view readings or send it to a health worker.
         </Text>
       )}
-    </ScreenContainer>
+    </View>
   );
 }
