@@ -7,7 +7,7 @@
     "build": "astro build",
     "check": "astro check",
     "cf:dev": "wrangler pages dev",
-    "cf:deploy": "wrangler pages deploy dist --project-name=phasmaframe-web"
+    "cf:deploy": "wrangler pages deploy dist --project-name=kasigla"
   },
   "dependencies": {
     "@app/shared": "workspace:*",

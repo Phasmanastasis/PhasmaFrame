@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode, type SyntheticEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode, type SyntheticEvent } from 'react';
 import PatientFlow from './PatientFlow';
 
 type View = 'home' | 'patients' | 'record' | 'note' | 'summary' | 'receive';
@@ -98,6 +98,7 @@ function ReadingRow({ reading }: { reading: Reading }) {
 }
 
 export default function HealthHub() {
+  const entryDialogRef = useRef<HTMLElement>(null);
   const [workspace, setWorkspace] = useState<'choose' | 'patient' | 'bhw'>('choose');
   const [view, setView] = useState<View>('home');
   const [patients, setPatients] = useState(seededPatients);
@@ -148,6 +149,35 @@ export default function HealthHub() {
     if (!ready) return;
     try { localStorage.setItem('alaga-bhw-demo', JSON.stringify({ patients, selectedId })); } catch { /* Keep this session usable when storage is unavailable. */ }
   }, [patients, selectedId, ready]);
+
+  useEffect(() => {
+    if (!showEntry) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const dialog = entryDialogRef.current;
+    const focusable = () => Array.from(dialog?.querySelectorAll<HTMLElement>('button, input, textarea, select, [tabindex]:not([tabindex="-1"])') ?? []).filter(element => !element.hasAttribute('disabled'));
+    focusable()[0]?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowEntry(false);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const items = focusable();
+      if (items.length === 0) return;
+      if (event.shiftKey && document.activeElement === items[0]) {
+        event.preventDefault();
+        items[items.length - 1].focus();
+      } else if (!event.shiftKey && document.activeElement === items[items.length - 1]) {
+        event.preventDefault();
+        items[0].focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      previousFocus?.focus();
+    };
+  }, [showEntry]);
 
   useEffect(() => {
     if (workspace !== 'bhw' || view !== 'receive') return;
@@ -218,7 +248,7 @@ export default function HealthHub() {
   };
   const confirmReceive = () => {
     const ids = new Set(activeBundle.readings.map(reading => reading.id));
-    const isValid = Boolean(activeBundle.id.trim() && activeBundle.name.trim()) && activeBundle.readings.length > 0 && ids.size === activeBundle.readings.length && activeBundle.readings.every(reading => Number.isFinite(reading.systolic) && reading.systolic >= 50 && reading.systolic <= 300 && Number.isFinite(reading.diastolic) && reading.diastolic >= 30 && reading.diastolic <= 200 && Number.isFinite(Date.parse(reading.measuredAt)) && Boolean(reading.measuredBy.trim() && reading.enteredBy.trim()));
+    const isValid = Boolean(activeBundle.id.trim() && activeBundle.name.trim()) && activeBundle.readings.length > 0 && ids.size === activeBundle.readings.length && activeBundle.readings.every(reading => Number.isFinite(reading.systolic) && reading.systolic >= 50 && reading.systolic <= 300 && Number.isFinite(reading.diastolic) && reading.diastolic >= 30 && reading.diastolic <= 200 && typeof reading.heartRate === 'number' && Number.isFinite(reading.heartRate) && reading.heartRate >= 20 && reading.heartRate <= 250 && Number.isFinite(Date.parse(reading.measuredAt)) && Boolean(reading.measuredBy.trim() && reading.enteredBy.trim()));
     if (!isValid) {
       setReceiveError('This sample has no readings to import. Select the valid sample packet and try again.');
       setReceiveStage('invalid');
@@ -326,6 +356,6 @@ export default function HealthHub() {
       </div>
     </div>
     <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-[#e1e5de] bg-[#f8f9f5] px-2 pb-[env(safe-area-inset-bottom)] pt-2 md:hidden print:hidden">{navItems.map(item => <button key={item.id} type="button" onClick={() => setView(item.id)} aria-current={activeNav === item.id ? 'page' : undefined} className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl text-xs font-semibold ${activeNav === item.id ? 'text-[#285d50]' : 'text-[#747a73]'}`}><span className={`grid h-8 min-w-14 place-items-center rounded-full ${activeNav === item.id ? 'bg-[#dcece4]' : ''}`}><Icon name={item.icon} size={19}/></span>{item.label}</button>)}</nav>
-    {showEntry && <div className="fixed inset-0 z-30 flex items-end justify-center bg-[#18211d]/40 p-0 sm:items-center sm:p-5 print:hidden" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setShowEntry(false); }}><section role="dialog" aria-modal="true" aria-labelledby="entry-title" className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[28px] bg-[#f8f9f5] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-xl sm:rounded-[28px] sm:p-7"><div className="flex items-start justify-between gap-4"><div><p className="mb-1 text-xs font-bold uppercase tracking-[.12em] text-[#668071]">{selected.name} · {selected.id}</p><h2 id="entry-title" className="mb-0 text-xl font-semibold">Add a visit reading</h2></div><button type="button" aria-label="Close" onClick={() => setShowEntry(false)} className="grid size-10 shrink-0 place-items-center rounded-full text-[#666f67] hover:bg-[#ebeee8]"><Icon name="close"/></button></div><p className="mb-5 mt-2 text-sm leading-6 text-[#737a72]">Enter values from an external monitor. This demo saves locally.</p><form noValidate onSubmit={saveReading} className="space-y-4"><div className="grid grid-cols-2 gap-3"><label className="text-xs font-semibold text-[#5a625a]">Systolic <span className="font-normal text-[#898f87]">mmHg</span><input required type="number" min="50" max="300" inputMode="numeric" value={form.systolic} onChange={event => { setForm({ ...form, systolic: event.target.value }); setReadingError(""); }} placeholder="e.g. 120" aria-describedby={readingError ? "reading-error" : undefined} className="mt-2 min-h-14 w-full rounded-2xl border border-[#d7ddd4] bg-white px-4 text-lg font-semibold text-[#293a31] outline-none focus:border-[#548273] focus:ring-2 focus:ring-[#b4d2c2]"/></label><label className="text-xs font-semibold text-[#5a625a]">Diastolic <span className="font-normal text-[#898f87]">mmHg</span><input required type="number" min="30" max="200" inputMode="numeric" value={form.diastolic} onChange={event => { setForm({ ...form, diastolic: event.target.value }); setReadingError(""); }} placeholder="e.g. 80" aria-describedby={readingError ? "reading-error" : undefined} className="mt-2 min-h-14 w-full rounded-2xl border border-[#d7ddd4] bg-white px-4 text-lg font-semibold text-[#293a31] outline-none focus:border-[#548273] focus:ring-2 focus:ring-[#b4d2c2]"/></label></div><label className="block text-xs font-semibold text-[#5a625a]">Measurement date and time<input required type="datetime-local" aria-describedby={readingError ? "reading-error" : undefined} value={form.measuredAt} onChange={event => setForm({ ...form, measuredAt: event.target.value })} className="mt-2 min-h-12 w-full rounded-2xl border border-[#d7ddd4] bg-white px-4 text-sm font-normal outline-none focus:border-[#548273] focus:ring-2 focus:ring-[#b4d2c2]"/></label><label className="block text-xs font-semibold text-[#5a625a]">Who measured it?<input required aria-describedby={readingError ? "reading-error" : undefined} value={form.measuredBy} onChange={event => setForm({ ...form, measuredBy: event.target.value })} placeholder="Name of the person using the monitor" className="mt-2 min-h-12 w-full rounded-2xl border border-[#d7ddd4] bg-white px-4 text-sm font-normal outline-none focus:border-[#548273] focus:ring-2 focus:ring-[#b4d2c2]"/></label><p id="reading-error" role="alert" className="text-xs font-medium text-[#8b3f32]">{readingError}</p><label className="block text-xs font-semibold text-[#5a625a]">Optional note<textarea value={form.note} onChange={event => setForm({ ...form, note: event.target.value })} rows={2} placeholder="Add context if needed" className="mt-2 w-full rounded-2xl border border-[#d7ddd4] bg-white px-4 py-3 text-sm font-normal outline-none focus:border-[#548273] focus:ring-2 focus:ring-[#b4d2c2]"/></label><div className="flex flex-col-reverse gap-2 border-t border-[#e2e6df] pt-4 sm:flex-row sm:justify-end"><ActionButton secondary onClick={() => setShowEntry(false)}>Cancel</ActionButton><ActionButton type="submit" icon="check">Save reading</ActionButton></div></form></section></div>}
+    {showEntry && <div className="fixed inset-0 z-30 flex items-end justify-center bg-[#18211d]/40 p-0 sm:items-center sm:p-5 print:hidden" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setShowEntry(false); }}><section ref={entryDialogRef} role="dialog" aria-modal="true" aria-labelledby="entry-title" className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[28px] bg-[#f8f9f5] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-xl sm:rounded-[28px] sm:p-7"><div className="flex items-start justify-between gap-4"><div><p className="mb-1 text-xs font-bold uppercase tracking-[.12em] text-[#668071]">{selected.name} · {selected.id}</p><h2 id="entry-title" className="mb-0 text-xl font-semibold">Add a visit reading</h2></div><button type="button" aria-label="Close" onClick={() => setShowEntry(false)} className="grid size-10 shrink-0 place-items-center rounded-full text-[#666f67] hover:bg-[#ebeee8]"><Icon name="close"/></button></div><p className="mb-5 mt-2 text-sm leading-6 text-[#737a72]">Enter values from an external monitor. This demo saves locally.</p><form noValidate onSubmit={saveReading} className="space-y-4"><div className="grid grid-cols-2 gap-3"><label className="text-xs font-semibold text-[#5a625a]">Systolic <span className="font-normal text-[#898f87]">mmHg</span><input required type="number" min="50" max="300" inputMode="numeric" value={form.systolic} onChange={event => { setForm({ ...form, systolic: event.target.value }); setReadingError(""); }} placeholder="e.g. 120" aria-describedby={readingError ? "reading-error" : undefined} className="mt-2 min-h-14 w-full rounded-2xl border border-[#d7ddd4] bg-white px-4 text-lg font-semibold text-[#293a31] outline-none focus:border-[#548273] focus:ring-2 focus:ring-[#b4d2c2]"/></label><label className="text-xs font-semibold text-[#5a625a]">Diastolic <span className="font-normal text-[#898f87]">mmHg</span><input required type="number" min="30" max="200" inputMode="numeric" value={form.diastolic} onChange={event => { setForm({ ...form, diastolic: event.target.value }); setReadingError(""); }} placeholder="e.g. 80" aria-describedby={readingError ? "reading-error" : undefined} className="mt-2 min-h-14 w-full rounded-2xl border border-[#d7ddd4] bg-white px-4 text-lg font-semibold text-[#293a31] outline-none focus:border-[#548273] focus:ring-2 focus:ring-[#b4d2c2]"/></label></div><label className="block text-xs font-semibold text-[#5a625a]">Measurement date and time<input required type="datetime-local" aria-describedby={readingError ? "reading-error" : undefined} value={form.measuredAt} onChange={event => setForm({ ...form, measuredAt: event.target.value })} className="mt-2 min-h-12 w-full rounded-2xl border border-[#d7ddd4] bg-white px-4 text-sm font-normal outline-none focus:border-[#548273] focus:ring-2 focus:ring-[#b4d2c2]"/></label><label className="block text-xs font-semibold text-[#5a625a]">Who measured it?<input required aria-describedby={readingError ? "reading-error" : undefined} value={form.measuredBy} onChange={event => setForm({ ...form, measuredBy: event.target.value })} placeholder="Name of the person using the monitor" className="mt-2 min-h-12 w-full rounded-2xl border border-[#d7ddd4] bg-white px-4 text-sm font-normal outline-none focus:border-[#548273] focus:ring-2 focus:ring-[#b4d2c2]"/></label><p id="reading-error" role="alert" className="text-xs font-medium text-[#8b3f32]">{readingError}</p><label className="block text-xs font-semibold text-[#5a625a]">Optional note<textarea value={form.note} onChange={event => setForm({ ...form, note: event.target.value })} rows={2} placeholder="Add context if needed" className="mt-2 w-full rounded-2xl border border-[#d7ddd4] bg-white px-4 py-3 text-sm font-normal outline-none focus:border-[#548273] focus:ring-2 focus:ring-[#b4d2c2]"/></label><div className="flex flex-col-reverse gap-2 border-t border-[#e2e6df] pt-4 sm:flex-row sm:justify-end"><ActionButton secondary onClick={() => setShowEntry(false)}>Cancel</ActionButton><ActionButton type="submit" icon="check">Save reading</ActionButton></div></form></section></div>}
   </main>;
 }

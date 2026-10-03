@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 import { healthResponseSchema, type HealthResponse } from '@app/shared';
 
-const apiUrl = import.meta.env.PUBLIC_API_URL ?? 'http://localhost:3000';
+// Default to same-origin (relative "/api/..."), which is how production is served:
+// the Worker handles /api/* on the same custom domain as the Pages site, so no CORS.
+// For local dev where the API runs on a separate port, set PUBLIC_API_URL
+// (e.g. http://localhost:3000).
+const apiUrl = import.meta.env.PUBLIC_API_URL ?? '';
 
 export default function ApiStatus() {
   const [health, setHealth] = useState<HealthResponse | null>(null);

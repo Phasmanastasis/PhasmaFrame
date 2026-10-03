@@ -191,6 +191,59 @@ These wrap `scripts/komodo-deploy.sh`. Deploys are governed by a strict least-pr
 rule (one named stack, confirm before acting, no resource/permission changes). Full flow,
 prerequisites, and troubleshooting: `docs/dev/deployment.md`.
 
+## Cloudflare (alternative deploy)
+
+A second, independent deploy target: the API runs on **Cloudflare Workers** backed by
+**D1**, and the web app on **Cloudflare Pages**, both served from a single origin
+(`kasigla.kuyacarlo.dev`, with the API same-origin at `/api/*`). [Wrangler](https://developers.cloudflare.com/workers/wrangler/)
+is a dev dependency in both apps; authenticate with `npx wrangler login` (or a
+`CLOUDFLARE_API_TOKEN` — a secret, never committed). Entry points:
+
+```bash
+just cf-dev-api        # run the API locally on the Workers runtime (local D1)
+just cf-dev-web        # run the web app locally on the Pages runtime
+just cf-migrate-local  # apply D1 SQL migrations to the local database
+just cf-migrate        # apply D1 SQL migrations to the remote database
+just cf-check          # validate the Worker config + bundle (no account needed)
+just cf-deploy-api     # deploy the API Worker (attaches the /api/* route)
+just cf-deploy-web     # build + deploy the web app to Pages
+```
+
+Config lives in `apps/api/wrangler.jsonc` and `apps/web/wrangler.jsonc`; D1 schema is in
+`apps/api/migrations/` (Prisma Migrate does not support D1). Full flow, prerequisites, and
+the live URLs: `docs/dev/deployment-cloudflare.md`.
+
+## k6 (API smoke and load checks)
+
+[k6](https://grafana.com/docs/k6/latest/set-up/install-k6/) is an external CLI; it is not
+installed through pnpm. `tests/k6/api.js` checks the API health response and reads the
+examples list. Both requests are read-only.
+
+Start the API against local D1 in one terminal:
+
+```bash
+just cf-migrate-local   # first run only; creates/applies migrations to local D1
+just cf-dev-api         # Wrangler listens on http://localhost:8787
+```
+
+Run the smoke check from another terminal:
+
+```bash
+k6 run -e BASE_URL=http://localhost:8787 -e PROFILE=smoke tests/k6/api.js
+```
+
+Run the light load profile against the same local API:
+
+```bash
+k6 run -e BASE_URL=http://localhost:8787 -e PROFILE=load tests/k6/api.js
+```
+
+Smoke uses one virtual user and one iteration. Load uses five virtual users for 30 seconds,
+with a one-second pause between iterations. Load checks currently require all checks to
+pass, fewer than 1% failed HTTP requests, and p95 latency below 500 ms. These are starter
+guardrails for local runs; compare results only under consistent conditions before treating
+latency as a service target. Do not aim the load profile at production.
+
 ## Keeping this in sync
 
 After editing recipes or scripts, re-run and update this document to match:

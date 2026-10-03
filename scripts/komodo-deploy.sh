@@ -26,13 +26,36 @@ base="${KOMODO_URL%/}"
 
 # Make a Komodo API call. $1 = path (e.g. read/ListStacks), $2 = JSON body.
 # Credentials are passed via headers from env; they are never echoed.
+# On a non-2xx HTTP status or a top-level JSON `error` field, print a clear,
+# secret-free message to stderr and return non-zero so callers/CI can detect it.
 komo() {
-  local path="$1" body="${2:-{}}"
-  curl -sS -m 30 -X POST "$base/$path" \
+  local path="$1" body="${2:-{}}" resp http out
+  # Append the HTTP status on its own trailing line, then split it off.
+  resp="$(curl -sS -m 30 -w $'\n%{http_code}' -X POST "$base/$path" \
     -H "Content-Type: application/json" \
     -H "X-Api-Key: ${KOMODO_API_KEY}" \
     -H "X-Api-Secret: ${KOMODO_API_SECRET}" \
-    -d "$body"
+    -d "$body")" || {
+      echo "ERROR: request to '$path' failed (network/TLS/timeout)." >&2
+      return 1
+    }
+  http="${resp##*$'\n'}"
+  out="${resp%$'\n'*}"
+  # Surface the body for the caller.
+  printf '%s\n' "$out"
+  # Detect a top-level JSON error field, if the body is JSON.
+  local apierr=""
+  if command -v jq >/dev/null 2>&1; then
+    apierr="$(printf '%s' "$out" | jq -r 'if type=="object" and has("error") then (.error|tostring) else "" end' 2>/dev/null || true)"
+  fi
+  if [ "${http:0:1}" != "2" ]; then
+    echo "ERROR: '$path' returned HTTP ${http}.${apierr:+ API error: ${apierr}}" >&2
+    return 1
+  fi
+  if [ -n "$apierr" ]; then
+    echo "ERROR: '$path' returned an API error: ${apierr}" >&2
+    return 1
+  fi
 }
 
 confirm() {
@@ -50,29 +73,46 @@ cmd="${1:-}"
 case "$cmd" in
   probe)
     echo "== GetVersion =="
-    komo read/GetVersion '{}'; echo
+    komo read/GetVersion '{}'
+    echo
     echo "== ListStacks (what the service user can see) =="
-    komo read/ListStacks '{}'; echo
+    komo read/ListStacks '{}'
+    echo
     echo "== ListServers =="
-    komo read/ListServers '{}'; echo
+    komo read/ListServers '{}'
+    echo
     echo "== GetStack: ${KOMODO_STACK} (permission/visibility on the target) =="
-    komo read/GetStack "{\"stack\":\"${KOMODO_STACK}\"}"; echo
+    komo read/GetStack "{\"stack\":\"${KOMODO_STACK}\"}"
+    echo
     ;;
   status)
     echo "== GetStack: ${KOMODO_STACK} =="
-    komo read/GetStack "{\"stack\":\"${KOMODO_STACK}\"}"; echo
+    komo read/GetStack "{\"stack\":\"${KOMODO_STACK}\"}"
+    echo
     ;;
   deploy)
     confirm "deploy"
     echo "== DeployStack: ${KOMODO_STACK} =="
-    komo execute/DeployStack "{\"stack\":\"${KOMODO_STACK}\"}"; echo
+    deploy_resp="$(komo execute/DeployStack "{\"stack\":\"${KOMODO_STACK}\"}")"
+    printf '%s\n' "$deploy_resp"
+    # DeployStack returns an Update object; a false `success` means the deploy was rejected.
+    if command -v jq >/dev/null 2>&1; then
+      ok="$(printf '%s' "$deploy_resp" | jq -r '.success // "unknown"' 2>/dev/null || echo unknown)"
+      if [ "$ok" = "false" ]; then
+        echo "ERROR: DeployStack reported success=false for ${KOMODO_STACK}." >&2
+        exit 1
+      fi
+    fi
+    echo
     echo "== Post-deploy status =="
-    komo read/GetStack "{\"stack\":\"${KOMODO_STACK}\"}"; echo
+    komo read/GetStack "{\"stack\":\"${KOMODO_STACK}\"}"
+    echo
     ;;
   destroy)
     confirm "destroy"
     echo "== DestroyStack: ${KOMODO_STACK} =="
-    komo execute/DestroyStack "{\"stack\":\"${KOMODO_STACK}\"}"; echo
+    komo execute/DestroyStack "{\"stack\":\"${KOMODO_STACK}\"}"
+    echo
     ;;
   *)
     echo "Usage: $0 {probe|status|deploy|destroy}" >&2

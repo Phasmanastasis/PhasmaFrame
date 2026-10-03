@@ -5,6 +5,15 @@ The API is deployed to a [Komodo](https://komo.do) instance that runs the repo's
 troubleshooting. The binding rules live in the always-on steering file
 `.kiro/steering/komodo-deploy.md`.
 
+## Live deployment
+
+- **Base URL:** <https://phasmanastasis.lyra-on.top>
+- **Health endpoint:** `GET /api/health` → `200` `{"status":"ok","service":"api"}`
+- The stack serves the API only. The site root `/` returns `404` (there is no web app
+  mounted at the root in this deployment).
+- TLS is a Let's Encrypt certificate for the hostname, terminated by the reverse proxy in
+  front of the stack; plain `http` redirects to `https`.
+
 ## Prerequisites
 
 1. **Credentials in `.env`** (root), never committed:
@@ -65,7 +74,38 @@ look for:
 > Status as of writing: credentials were not yet present in `.env`, so the probe has not
 > been run. Fill `.env` and run `just komodo-probe`, then paste the findings here.
 
-## Troubleshooting
+## How to verify the deployment
+
+Read-only checks against the live hostname (keep the request count low):
+
+```bash
+HOST=phasmanastasis.lyra-on.top
+
+# 1. DNS resolves to the proxy host.
+getent hosts "$HOST"
+
+# 2. TLS: valid Let's Encrypt cert for the name, with expiry.
+echo | openssl s_client -servername "$HOST" -connect "$HOST":443 2>/dev/null \
+  | openssl x509 -noout -subject -issuer -dates
+
+# 3a. http redirects to https.
+curl -sS -o /dev/null -D - "http://$HOST/" | grep -i '^location:'
+
+# 3b. Health endpoint returns 200 + the expected JSON.
+curl -sS "https://$HOST/api/health"      # => {"status":"ok","service":"api"}
+
+# 3c. Root is API-only; it returns 404 (no web app at /).
+curl -sS -o /dev/null -w '%{http_code}\n' "https://$HOST/"   # => 404
+```
+
+Expected results: DNS resolves; the certificate is issued by Let's Encrypt and in date;
+`http` 301/302-redirects to `https`; `/api/health` returns `200` with
+`{"status":"ok","service":"api"}`; `/` returns `404`. The public JSON from `/api/health`
+must match what the container reports internally.
+
+Cross-check in Komodo (or via the deploy tooling): the stack state is **running** and the
+`…-api-1` container is **healthy** with no restarts — `just komodo-status`, or the stack's
+page in the Komodo UI.
 
 - **`must attach either AUTHORIZATION header ... OR pass X-API-KEY and X-API-SECRET`** —
   credentials are missing/empty in `.env`. Fill `KOMODO_API_KEY` / `KOMODO_API_SECRET`.
@@ -76,3 +116,11 @@ look for:
 - **Deploy succeeds but the container is unhealthy** — check the compose healthcheck and
   the API logs in Komodo; verify `DATABASE_URL` and the data volume. See the Docker section
   in `devtools.md`.
+
+## Exit codes
+
+The `komodo-*` recipes exit **non-zero** when the Komodo API returns a non-2xx HTTP status
+or a JSON body with a top-level `error` (for example a wrong `KOMODO_STACK`, which returns
+HTTP 500 `did not find any Stack matching …`), and `komodo-deploy` also fails if
+`DeployStack` reports `success=false`. A successful `probe`/`status`/`deploy` exits 0.
+Error messages are written to stderr and never contain the API key or secret.
