@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode, type SyntheticEvent } from 'react';
+import PatientFlow from './PatientFlow';
 
 type View = 'home' | 'patients' | 'record' | 'note' | 'summary' | 'receive';
 type Reading = {
@@ -6,6 +7,7 @@ type Reading = {
   measuredAt: string;
   systolic: number;
   diastolic: number;
+  heartRate?: number;
   measuredBy: string;
   enteredBy: string;
   source: 'Patient app' | 'BHW visit';
@@ -21,29 +23,29 @@ type Patient = {
   readings: Reading[];
 };
 type ReceiveStage = 'ready' | 'review' | 'complete' | 'retry' | 'invalid';
-type IncomingVariant = 'valid' | 'empty';
+type IncomingVariant = 'valid' | 'empty' | 'local';
 
 const seededPatients: Patient[] = [
   {
     id: 'SI-0042', name: 'Lina Reyes', age: 58, area: 'Purok 3 · San Isidro', followUp: 'Today',
     note: 'Follow-up completed. Patient brought home readings for review.',
     readings: [
-      { id: 'bp-0042-3', measuredAt: '2026-10-04T08:42:00+08:00', systolic: 132, diastolic: 84, measuredBy: 'Lina Reyes', enteredBy: 'Lina Reyes', source: 'Patient app' },
-      { id: 'bp-0042-2', measuredAt: '2026-10-01T19:15:00+08:00', systolic: 128, diastolic: 82, measuredBy: 'Lina Reyes', enteredBy: 'Lina Reyes', source: 'Patient app' },
-      { id: 'bp-0042-1', measuredAt: '2026-09-28T09:10:00+08:00', systolic: 136, diastolic: 86, measuredBy: 'Lina Reyes', enteredBy: 'Ana Cruz', source: 'BHW visit' },
+      { id: 'bp-0042-3', measuredAt: '2026-10-04T08:42:00+08:00', systolic: 132, diastolic: 84, heartRate: 76, measuredBy: 'Lina Reyes', enteredBy: 'Lina Reyes', source: 'Patient app' },
+      { id: 'bp-0042-2', measuredAt: '2026-10-01T19:15:00+08:00', systolic: 128, diastolic: 82, heartRate: 74, measuredBy: 'Lina Reyes', enteredBy: 'Lina Reyes', source: 'Patient app' },
+      { id: 'bp-0042-1', measuredAt: '2026-09-28T09:10:00+08:00', systolic: 136, diastolic: 86, heartRate: 78, measuredBy: 'Lina Reyes', enteredBy: 'Ana Cruz', source: 'BHW visit' },
     ],
   },
   {
     id: 'SI-0031', name: 'Ramon Santos', age: 64, area: 'Purok 1 · San Isidro', followUp: 'Due this week', note: '',
     readings: [
-      { id: 'bp-0031-2', measuredAt: '2026-10-02T07:30:00+08:00', systolic: 142, diastolic: 90, measuredBy: 'Ramon Santos', enteredBy: 'Ramon Santos', source: 'Patient app' },
-      { id: 'bp-0031-1', measuredAt: '2026-09-26T08:00:00+08:00', systolic: 138, diastolic: 88, measuredBy: 'Ramon Santos', enteredBy: 'Ana Cruz', source: 'BHW visit' },
+      { id: 'bp-0031-2', measuredAt: '2026-10-02T07:30:00+08:00', systolic: 142, diastolic: 90, heartRate: 82, measuredBy: 'Ramon Santos', enteredBy: 'Ramon Santos', source: 'Patient app' },
+      { id: 'bp-0031-1', measuredAt: '2026-09-26T08:00:00+08:00', systolic: 138, diastolic: 88, heartRate: 79, measuredBy: 'Ramon Santos', enteredBy: 'Ana Cruz', source: 'BHW visit' },
     ],
   },
   {
     id: 'SI-0056', name: 'Marta Dizon', age: 51, area: 'Purok 5 · San Isidro', followUp: 'Due Oct 10', note: '',
     readings: [
-      { id: 'bp-0056-1', measuredAt: '2026-09-30T18:05:00+08:00', systolic: 124, diastolic: 80, measuredBy: 'Marta Dizon', enteredBy: 'Marta Dizon', source: 'Patient app' },
+      { id: 'bp-0056-1', measuredAt: '2026-09-30T18:05:00+08:00', systolic: 124, diastolic: 80, heartRate: 72, measuredBy: 'Marta Dizon', enteredBy: 'Marta Dizon', source: 'Patient app' },
     ],
   },
 ];
@@ -51,8 +53,8 @@ const seededPatients: Patient[] = [
 const incomingBundle: Patient = {
   id: 'SI-0074', name: 'Elena Villanueva', age: 47, area: 'Purok 2 · San Isidro', followUp: 'New record', note: '',
   readings: [
-    { id: 'bp-0074-2', measuredAt: '2026-10-03T07:50:00+08:00', systolic: 126, diastolic: 81, measuredBy: 'Elena Villanueva', enteredBy: 'Elena Villanueva', source: 'Patient app' },
-    { id: 'bp-0074-1', measuredAt: '2026-09-29T18:20:00+08:00', systolic: 130, diastolic: 83, measuredBy: 'Elena Villanueva', enteredBy: 'Elena Villanueva', source: 'Patient app' },
+    { id: 'bp-0074-2', measuredAt: '2026-10-03T07:50:00+08:00', systolic: 126, diastolic: 81, heartRate: 75, measuredBy: 'Elena Villanueva', enteredBy: 'Elena Villanueva', source: 'Patient app' },
+    { id: 'bp-0074-1', measuredAt: '2026-09-29T18:20:00+08:00', systolic: 130, diastolic: 83, heartRate: 77, measuredBy: 'Elena Villanueva', enteredBy: 'Elena Villanueva', source: 'Patient app' },
   ],
 };
 
@@ -91,11 +93,12 @@ function ReadingRow({ reading }: { reading: Reading }) {
   return <article className="grid gap-3 border-b border-[#e5e8e1] py-4 last:border-0 sm:grid-cols-[minmax(150px,.7fr)_minmax(0,1.5fr)_auto] sm:items-center">
     <div><div className="flex items-center gap-2 text-sm font-semibold text-[#303631]"><span>{formatDate(reading.measuredAt)}</span><span className="text-[#858a83]">·</span><span className="font-medium text-[#656b64]">{formatTime(reading.measuredAt)}</span></div><span className="mt-1 inline-flex rounded-full bg-[#f1f3ef] px-2.5 py-1 text-xs font-medium text-[#58645b]">{reading.source}</span></div>
     <p className="mb-0 text-xs leading-5 text-[#70766f]">Measured by <strong className="font-semibold text-[#454d46]">{reading.measuredBy}</strong><br/>Entered by <strong className="font-semibold text-[#454d46]">{reading.enteredBy}</strong>{reading.note && <><br/><span className="italic">{reading.note}</span></>}</p>
-    <div className="text-left sm:text-right"><p className="mb-0 text-lg font-semibold tabular-nums tracking-tight text-[#263e38]">{reading.systolic}<span className="px-1 text-[#90968f]">/</span>{reading.diastolic} <span className="text-xs font-medium text-[#727870]">mmHg</span></p></div>
+    <div className="text-left sm:text-right"><p className="mb-0 text-lg font-semibold tabular-nums tracking-tight text-[#263e38]">{reading.systolic}<span className="px-1 text-[#90968f]">/</span>{reading.diastolic} <span className="text-xs font-medium text-[#727870]">mmHg</span></p><p className="mb-0 mt-1 text-sm font-semibold tabular-nums text-[#505e54]">{reading.heartRate ? `Heart rate ${reading.heartRate} bpm` : 'Heart rate not recorded'}</p></div>
   </article>;
 }
 
 export default function HealthHub() {
+  const [workspace, setWorkspace] = useState<'choose' | 'patient' | 'bhw'>('choose');
   const [view, setView] = useState<View>('home');
   const [patients, setPatients] = useState(seededPatients);
   const [selectedId, setSelectedId] = useState(seededPatients[0].id);
@@ -105,6 +108,7 @@ export default function HealthHub() {
   const [receiveStage, setReceiveStage] = useState<ReceiveStage>('ready');
   const [receiveResult, setReceiveResult] = useState({ imported: 0, skipped: 0 });
   const [incomingVariant, setIncomingVariant] = useState<IncomingVariant>('valid');
+  const [localIncoming, setLocalIncoming] = useState<Patient | null>(null);
   const [receiveError, setReceiveError] = useState('');
   const [confirmed, setConfirmed] = useState(false);
   const [noteError, setNoteError] = useState('');
@@ -115,7 +119,7 @@ export default function HealthHub() {
   const [form, setForm] = useState({ systolic: '', diastolic: '', measuredAt: localDateTimeNow(), measuredBy: '', note: '' });
   const selected = patients.find(patient => patient.id === selectedId) ?? patients[0];
   const latest = selected.readings[0] ?? null;
-  const activeBundle = incomingVariant === 'valid' ? incomingBundle : { ...incomingBundle, readings: [] };
+  const activeBundle = incomingVariant === 'local' && localIncoming ? localIncoming : incomingVariant === 'empty' ? { ...incomingBundle, readings: [] } : incomingBundle;
   const dayLabel = useMemo(() => new Date().toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' }), []);
   const filteredPatients = patients.filter(patient => `${patient.name} ${patient.id} ${patient.area}`.toLowerCase().includes(search.trim().toLowerCase()));
   const recentReadings = patients.flatMap(patient => patient.readings.slice(0, 1).map(reading => ({ patient, reading }))).sort((a, b) => b.reading.measuredAt.localeCompare(a.reading.measuredAt)).slice(0, 3);
@@ -144,6 +148,22 @@ export default function HealthHub() {
     if (!ready) return;
     try { localStorage.setItem('alaga-bhw-demo', JSON.stringify({ patients, selectedId })); } catch { /* Keep this session usable when storage is unavailable. */ }
   }, [patients, selectedId, ready]);
+
+  useEffect(() => {
+    if (workspace !== 'bhw' || view !== 'receive') return;
+    try {
+      const stored = localStorage.getItem('alaga-pending-transfer');
+      if (stored) {
+        const parsed = JSON.parse(stored) as Patient;
+        if (parsed.id && parsed.name && Array.isArray(parsed.readings)) {
+          setLocalIncoming(parsed);
+          setIncomingVariant('local');
+          setReceiveStage('ready');
+          setReceiveError('');
+        }
+      }
+    } catch { /* The static sample packet remains available if the local draft cannot be read. */ }
+  }, [workspace, view]);
 
   const openPatient = (id: string) => { setSelectedId(id); setView('record'); };
   const updateSelected = (update: (patient: Patient) => Patient) => setPatients(current => current.map(patient => patient.id === selectedId ? update(patient) : patient));
@@ -184,7 +204,7 @@ export default function HealthHub() {
     setView('record');
   };
   const downloadCsv = () => {
-    const rows = [['Patient', selected.name], ['Patient code', selected.id], ['Age', String(selected.age)], ['Care area', selected.area], ['Visit note', selected.note], [], ['Date', 'Time', 'Systolic mmHg', 'Diastolic mmHg', 'Measured by', 'Entered by', 'Source', 'Note'], ...selected.readings.map(reading => [formatDate(reading.measuredAt), formatTime(reading.measuredAt), String(reading.systolic), String(reading.diastolic), reading.measuredBy, reading.enteredBy, reading.source, reading.note ?? ''])];
+            const rows = [['Patient', selected.name], ['Patient code', selected.id], ['Age', String(selected.age)], ['Care area', selected.area], ['Visit note', selected.note], [], ['Date', 'Time', 'Systolic mmHg', 'Diastolic mmHg', 'Heart rate bpm', 'Measured by', 'Entered by', 'Source', 'Note'], ...selected.readings.map(reading => [formatDate(reading.measuredAt), formatTime(reading.measuredAt), String(reading.systolic), String(reading.diastolic), reading.heartRate ? String(reading.heartRate) : '', reading.measuredBy, reading.enteredBy, reading.source, reading.note ?? ''])];
     const csv = rows.map(row => row.map(value => {
       const normalized = String(value ?? '');
       const safe = /^[=+\-@\t\r]/.test(normalized) ? `'${normalized}` : normalized;
@@ -231,6 +251,9 @@ export default function HealthHub() {
     setView('record');
   };
 
+  if (workspace === 'patient') return <PatientFlow onChangeRole={() => setWorkspace('choose')} />;
+  if (workspace === 'choose') return <main className="min-h-screen bg-[#f2f4ef] px-4 py-10 text-[#202522] sm:px-8"><div className="mx-auto max-w-4xl"><div className="mb-9"><p className="mb-2 text-base font-semibold text-[#386b5c]">Alaga · Offline BP follow-up</p><h1 className="mb-3 text-3xl font-semibold tracking-tight text-[#243e35] sm:text-4xl">How will you use this app?</h1><p className="mb-0 max-w-[60ch] text-base leading-7 text-[#526158]">Choose the view that fits you. You can change roles at any time.</p></div><div className="grid gap-5 sm:grid-cols-2"><button type="button" onClick={() => setWorkspace('patient')} className="min-h-52 rounded-3xl bg-white p-6 text-left transition hover:bg-[#f8faf7] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#28675c] sm:p-8"><span className="mb-6 grid size-12 place-items-center rounded-2xl bg-[#dcece4] text-[#285d50]"><Icon name="heart" size={24}/></span><span className="block text-xl font-semibold text-[#293b33]">I’m a patient or caregiver</span><span className="mt-2 block text-base leading-7 text-[#59645c]">Record blood pressure and heart rate, review saved readings, and prepare your record for a BHW.</span></button><button type="button" onClick={() => setWorkspace('bhw')} className="min-h-52 rounded-3xl bg-[#dcece4] p-6 text-left transition hover:bg-[#d2e5da] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#28675c] sm:p-8"><span className="mb-6 grid size-12 place-items-center rounded-2xl bg-white text-[#285d50]"><Icon name="people" size={24}/></span><span className="block text-xl font-semibold text-[#293b33]">I’m a barangay health worker</span><span className="mt-2 block text-base leading-7 text-[#405d4b]">Review patient records, receive a prepared record, add visit notes, and export a summary.</span></button></div><p className="mb-0 mt-7 max-w-[60ch] text-sm leading-6 text-[#626a62]">All information is synthetic demo data. The prototype saves in this browser and does not send records to another device.</p></div></main>;
+
   return <main className="min-h-screen bg-[#f2f4ef] text-[#202522]">
     <div className="mx-auto min-h-screen max-w-[1440px] md:grid md:grid-cols-[248px_minmax(0,1fr)]">
       <aside className="hidden border-r border-[#e3e7df] bg-[#f8f9f5] px-5 py-7 md:flex md:flex-col print:hidden">
@@ -245,7 +268,7 @@ export default function HealthHub() {
       <div className="min-w-0">
         <header className="sticky top-0 z-10 flex min-h-[72px] items-center justify-between border-b border-[#e3e7df] bg-[#f8f9f5] px-5 md:px-10 print:hidden">
           <div className="flex items-center gap-3"><span className="grid size-9 place-items-center rounded-full bg-[#dcece4] text-[#295d52] md:hidden"><Icon name="heart" size={19} /></span><div><p className="mb-0 text-xs font-medium text-[#606a62]">Barangay San Isidro <span className="px-1">·</span> {dayLabel}</p><h1 className="mb-0 mt-0.5 text-[17px] font-semibold tracking-tight text-[#242a26] md:text-lg">{titles[view]}</h1></div></div>
-          <div className="flex items-center gap-2"><span className="hidden items-center gap-1.5 rounded-full bg-[#e4f1e9] px-3 py-1.5 text-xs font-semibold text-[#376b55] sm:inline-flex"><Icon name="check" size={15} />On this device</span><span className="grid size-9 place-items-center rounded-full bg-[#e8eee7] text-xs font-bold text-[#425e4e]">AC</span><span className="hidden text-sm font-semibold text-[#424a43] sm:block">Ana Cruz</span></div>
+          <div className="flex items-center gap-2"><span className="hidden items-center gap-1.5 rounded-full bg-[#e4f1e9] px-3 py-1.5 text-xs font-semibold text-[#376b55] sm:inline-flex"><Icon name="check" size={15} />On this device</span><span className="grid size-9 place-items-center rounded-full bg-[#e8eee7] text-xs font-bold text-[#425e4e]">AC</span><span className="hidden text-sm font-semibold text-[#424a43] sm:block">Ana Cruz</span><button type="button" onClick={() => setWorkspace('choose')} className="min-h-10 rounded-full px-3 text-sm font-semibold text-[#285d50] underline underline-offset-4">Change role</button></div>
         </header>
 
         <div className="mx-auto max-w-6xl px-4 pb-32 pt-6 sm:px-7 md:px-10 md:pb-12 md:pt-9">
@@ -270,7 +293,7 @@ export default function HealthHub() {
 
           {view === 'note' && <section className="mx-auto max-w-3xl rounded-[28px] border border-[#e4e7e1] bg-white p-5 sm:p-8"><button type="button" onClick={() => setView('record')} className="mb-5 inline-flex min-h-10 items-center gap-1 rounded-full px-3 text-xs font-semibold text-[#386b5c] hover:bg-[#f0f4ef]"><Icon name="back" size={16}/>Back to {selected.name}</button><div className="border-b border-[#e8ebe5] pb-5"><h2 className="mb-1 text-xl font-semibold">Visit note for {selected.name}</h2><p className="mb-0 text-sm text-[#747b73]">{selected.id} · {dayLabel} · BHW Ana Cruz</p></div><form onSubmit={saveVisitNote} className="pt-5"><label htmlFor="visit-note" className="mb-2 block text-sm font-semibold text-[#414a42]">Follow-up context</label><p className="mb-3 text-xs leading-5 text-[#747b73]">Write an observation for the next BHW or RHU visit. Keep to information shared during this follow-up.</p><textarea id="visit-note" required maxLength={500} aria-invalid={Boolean(noteError)} aria-describedby={noteError ? "visit-note-error" : "visit-note-count"} value={noteDraft} onChange={event => { setNoteDraft(event.target.value); if (event.target.value.trim()) setNoteError(""); }} placeholder="What did you review together? What should the next visit know?" rows={7} className="w-full resize-y rounded-2xl border border-[#d5ddd4] bg-[#fbfcf9] p-4 text-sm leading-6 text-[#303731] outline-none placeholder:text-[#929a91] focus:border-[#548273] focus:ring-2 focus:ring-[#9dc3b1]"/><div className="mt-2 flex items-start justify-between gap-3"><span id="visit-note-error" role="alert" className="text-xs font-medium text-[#8b3f32]">{noteError}</span><span id="visit-note-count" className="text-xs text-[#626a62]">{noteDraft.length}/500</span></div><div className="mt-4 flex flex-wrap gap-3"><ActionButton type="submit" icon="check">Save visit note</ActionButton><ActionButton secondary onClick={() => { setRemoveNoteConfirm(false); setView('record'); }}>Cancel</ActionButton>{selected.note && <ActionButton secondary onClick={() => setRemoveNoteConfirm(true)}>Remove saved note</ActionButton>}</div>{removeNoteConfirm && <div role="alert" className="mt-4 border-t border-[#e8ebe5] pt-4"><p className="mb-3 text-sm text-[#414a42]">Remove the saved note from {selected.name}’s record?</p><div className="flex flex-wrap gap-3"><button type="button" onClick={removeVisitNote} className="min-h-12 rounded-full bg-[#8b3f32] px-5 text-sm font-semibold text-white hover:bg-[#733327]">Remove note</button><ActionButton secondary onClick={() => setRemoveNoteConfirm(false)}>Keep note</ActionButton></div></div>}<p className="mb-0 mt-4 text-xs text-[#7d857c]">Saved to this device in the demo.</p></form></section>}
 
-          {view === 'summary' && <div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[minmax(0,1fr)_280px]"><section className="rounded-[28px] border border-[#e4e7e1] bg-white p-5 sm:p-8"><div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#e8ebe5] pb-5"><div><p className="mb-1 text-xs font-bold uppercase tracking-[.12em] text-[#7d847a]">For the next RHU / YAKAP visit</p><h2 className="mb-1 text-2xl font-semibold tracking-tight">Patient follow-up summary</h2><p className="mb-0 text-sm text-[#747b73]">Prepared by BHW Ana Cruz · {dayLabel}</p></div><div className="flex flex-wrap gap-2 print:hidden"><button type="button" onClick={() => window.print()} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[#dce0d8] px-4 text-sm font-semibold text-[#3e4840] hover:bg-[#f5f6f2]"><Icon name="print" size={17}/>Print</button><button type="button" onClick={downloadCsv} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#366b60] px-4 text-sm font-semibold text-white hover:bg-[#28594f]"><Icon name="download" size={17}/>Export CSV</button></div>{exportMessage && <p role="status" aria-live="polite" className="mb-0 mt-3 text-xs text-[#315f52]">{exportMessage}</p>}</div><div className="grid gap-4 py-5 sm:grid-cols-2"><div><p className="mb-1 text-xs text-[#7d847a]">Patient</p><p className="mb-0 text-sm font-semibold">{selected.name} <span className="font-normal text-[#727970]">· {selected.id}</span></p></div><div><p className="mb-1 text-xs text-[#7d847a]">Record contains</p><p className="mb-0 text-sm font-semibold">{selected.readings.length} blood pressure readings</p></div><div><p className="mb-1 text-xs text-[#7d847a]">Most recent value</p><p className="mb-0 text-sm font-semibold">{latest ? <>{latest.systolic}/{latest.diastolic} mmHg <span className="font-normal text-[#727970]">· {formatDate(latest.measuredAt)}, {formatTime(latest.measuredAt)}</span></> : 'No reading on file'}</p></div><div><p className="mb-1 text-xs text-[#7d847a]">Information source</p><p className="mb-0 text-sm font-semibold">Patient app and BHW visit entries</p></div></div><div className="rounded-2xl bg-[#f5f6f2] p-4"><p className="mb-1 text-xs font-semibold text-[#6b736a]">Visit note</p>{selected.note ? <p className="mb-0 text-sm leading-6 text-[#404841]">{selected.note}</p> : <p className="mb-0 text-sm text-[#7c837a]">No note added.</p>}</div><div className="mt-5"><h3 className="mb-2 text-sm font-semibold">Reading history</h3>{selected.readings.length ? selected.readings.map(reading => <ReadingRow key={reading.id} reading={reading}/>) : <p className="mb-0 py-6 text-sm text-[#626a62]">No readings are saved. Add a measured value when the patient is present.</p>}</div><p className="mb-0 mt-4 text-xs leading-5 text-[#868d84]">This summary organizes recorded information for discussion with a health professional. It does not provide diagnosis or treatment advice. Direct digital transfer to the RHU is not available in this demo.</p></section><aside className="h-fit rounded-[28px] bg-[#e8eee7] p-5 sm:p-6 print:hidden"><h3 className="mb-2 text-base font-semibold">Summary details</h3><p className="mb-4 text-xs leading-5 text-[#68746a]">Print this page or export a CSV to use with the RHU's existing process.</p><dl className="space-y-3 border-t border-[#d5ded4] pt-4 text-xs"><div className="flex justify-between gap-3"><dt className="text-[#68746a]">Patient code</dt><dd className="m-0 font-semibold">{selected.id}</dd></div><div className="flex justify-between gap-3"><dt className="text-[#68746a]">Care area</dt><dd className="m-0 text-right font-semibold">{selected.area}</dd></div><div className="flex justify-between gap-3"><dt className="text-[#68746a]">Prepared</dt><dd className="m-0 font-semibold">{formatDate(new Date().toISOString())}</dd></div></dl><button type="button" onClick={() => setView('patients')} className="mt-5 inline-flex min-h-10 items-center gap-1 rounded-full px-3 text-xs font-semibold text-[#3a6855] hover:bg-white/50">Choose another patient <Icon name="arrow" size={15}/></button></aside></div>}
+          {view === 'summary' && <div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[minmax(0,1fr)_280px]"><section className="rounded-[28px] border border-[#e4e7e1] bg-white p-5 sm:p-8"><div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#e8ebe5] pb-5"><div><p className="mb-1 text-xs font-bold uppercase tracking-[.12em] text-[#7d847a]">For the next RHU / YAKAP visit</p><h2 className="mb-1 text-2xl font-semibold tracking-tight">Patient follow-up summary</h2><p className="mb-0 text-sm text-[#747b73]">Prepared by BHW Ana Cruz · {dayLabel}</p></div><div className="flex flex-wrap gap-2 print:hidden"><button type="button" onClick={() => window.print()} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[#dce0d8] px-4 text-sm font-semibold text-[#3e4840] hover:bg-[#f5f6f2]"><Icon name="print" size={17}/>Print</button><button type="button" onClick={downloadCsv} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#366b60] px-4 text-sm font-semibold text-white hover:bg-[#28594f]"><Icon name="download" size={17}/>Export CSV</button></div>{exportMessage && <p role="status" aria-live="polite" className="mb-0 mt-3 text-xs text-[#315f52]">{exportMessage}</p>}</div><div className="grid gap-4 py-5 sm:grid-cols-2"><div><p className="mb-1 text-xs text-[#7d847a]">Patient</p><p className="mb-0 text-sm font-semibold">{selected.name} <span className="font-normal text-[#727970]">· {selected.id}</span></p></div><div><p className="mb-1 text-xs text-[#7d847a]">Record contains</p><p className="mb-0 text-sm font-semibold">{selected.readings.length} blood pressure readings</p></div><div><p className="mb-1 text-xs text-[#7d847a]">Most recent value</p><p className="mb-0 text-sm font-semibold">{latest ? <>{latest.systolic}/{latest.diastolic} mmHg <span className="font-normal text-[#727970]">· {latest.heartRate ? `${latest.heartRate} bpm · ` : ""}{formatDate(latest.measuredAt)}, {formatTime(latest.measuredAt)}</span></> : 'No reading on file'}</p></div><div><p className="mb-1 text-xs text-[#7d847a]">Information source</p><p className="mb-0 text-sm font-semibold">Patient app and BHW visit entries</p></div></div><div className="rounded-2xl bg-[#f5f6f2] p-4"><p className="mb-1 text-xs font-semibold text-[#6b736a]">Visit note</p>{selected.note ? <p className="mb-0 text-sm leading-6 text-[#404841]">{selected.note}</p> : <p className="mb-0 text-sm text-[#7c837a]">No note added.</p>}</div><div className="mt-5"><h3 className="mb-2 text-sm font-semibold">Reading history</h3>{selected.readings.length ? selected.readings.map(reading => <ReadingRow key={reading.id} reading={reading}/>) : <p className="mb-0 py-6 text-sm text-[#626a62]">No readings are saved. Add a measured value when the patient is present.</p>}</div><p className="mb-0 mt-4 text-xs leading-5 text-[#868d84]">This summary organizes recorded information for discussion with a health professional. It does not provide diagnosis or treatment advice. Direct digital transfer to the RHU is not available in this demo.</p></section><aside className="h-fit rounded-[28px] bg-[#e8eee7] p-5 sm:p-6 print:hidden"><h3 className="mb-2 text-base font-semibold">Summary details</h3><p className="mb-4 text-xs leading-5 text-[#68746a]">Print this page or export a CSV to use with the RHU's existing process.</p><dl className="space-y-3 border-t border-[#d5ded4] pt-4 text-xs"><div className="flex justify-between gap-3"><dt className="text-[#68746a]">Patient code</dt><dd className="m-0 font-semibold">{selected.id}</dd></div><div className="flex justify-between gap-3"><dt className="text-[#68746a]">Care area</dt><dd className="m-0 text-right font-semibold">{selected.area}</dd></div><div className="flex justify-between gap-3"><dt className="text-[#68746a]">Prepared</dt><dd className="m-0 font-semibold">{formatDate(new Date().toISOString())}</dd></div></dl><button type="button" onClick={() => setView('patients')} className="mt-5 inline-flex min-h-10 items-center gap-1 rounded-full px-3 text-xs font-semibold text-[#3a6855] hover:bg-white/50">Choose another patient <Icon name="arrow" size={15}/></button></aside></div>}
 
           {view === 'receive' && <div className="mx-auto max-w-3xl space-y-5">
             <section className="rounded-[28px] border border-[#e4e7e1] bg-white p-5 sm:p-8">
@@ -278,14 +301,14 @@ export default function HealthHub() {
                 <h2 className="mb-1 text-xl font-semibold tracking-tight">Incoming record from the patient app</h2>
                 <p className="mb-0 text-sm leading-6 text-[#626a62]">Check the patient code and readings, then confirm. The demo merges matching reading IDs and skips duplicates.</p>
               </div>
-              {receiveStage === 'ready' && <label className="mt-5 block max-w-sm text-xs font-semibold text-[#414a42]" htmlFor="demo-packet">Demo packet<select id="demo-packet" value={incomingVariant} onChange={event => { setIncomingVariant(event.target.value as IncomingVariant); setReceiveError(''); }} className="mt-2 min-h-12 w-full rounded-2xl border border-[#d7ddd4] bg-white px-4 text-sm font-normal outline-none focus:border-[#548273] focus:ring-2 focus:ring-[#b4d2c2]"><option value="valid">Elena Villanueva · 2 readings</option><option value="empty">Incomplete packet · no readings</option></select></label>}
+              {receiveStage === 'ready' && <label className="mt-5 block max-w-sm text-xs font-semibold text-[#414a42]" htmlFor="demo-packet">Record to review<select id="demo-packet" value={incomingVariant} onChange={event => { setIncomingVariant(event.target.value as IncomingVariant); setReceiveError(''); }} className="mt-2 min-h-12 w-full rounded-2xl border border-[#d7ddd4] bg-white px-4 text-sm font-normal outline-none focus:border-[#548273] focus:ring-2 focus:ring-[#b4d2c2]"><option value="valid">Elena Villanueva · 2 readings · sample</option>{localIncoming && <option value="local">{localIncoming.name} · {localIncoming.readings.length} readings · this browser</option>}<option value="empty">Incomplete packet · no readings</option></select></label>}
               <dl className="grid gap-x-6 gap-y-4 border-b border-[#e8ebe5] py-5 sm:grid-cols-2">
                 <div><dt className="text-xs text-[#626a62]">Patient</dt><dd className="mb-0 mt-1 text-sm font-semibold">{activeBundle.name} · {activeBundle.id}</dd></div>
                 <div><dt className="text-xs text-[#626a62]">Area</dt><dd className="mb-0 mt-1 text-sm font-semibold">{activeBundle.area}</dd></div>
                 <div><dt className="text-xs text-[#626a62]">Included readings</dt><dd className="mb-0 mt-1 text-sm font-semibold">{activeBundle.readings.length ? <>{activeBundle.readings.length} · {formatDate(activeBundle.readings[activeBundle.readings.length - 1].measuredAt)} to {formatDate(activeBundle.readings[0].measuredAt)}</> : 'No readings included'}</dd></div>
                 <div><dt className="text-xs text-[#626a62]">Import status</dt><dd className="mb-0 mt-1 text-sm font-semibold">{patients.some(patient => patient.id === activeBundle.id) ? 'Patient code already on this device' : 'New patient record'}</dd></div>
               </dl>
-              {receiveStage === 'ready' && <div className="pt-5"><ActionButton onClick={() => { setConfirmed(false); setReceiveError(''); setReceiveStage('review'); }} icon="arrow">Review readings</ActionButton><p className="mb-0 mt-3 text-xs leading-5 text-[#626a62]">This is a local sample packet. Nearby-device discovery is not connected.</p></div>}
+              {receiveStage === 'ready' && <div className="pt-5"><ActionButton onClick={() => { setConfirmed(false); setReceiveError(''); setReceiveStage('review'); }} icon="arrow">Review readings</ActionButton><p className="mb-0 mt-3 text-xs leading-5 text-[#626a62]">This demo reads records saved in this browser. Nearby-device discovery is not connected.</p></div>}
               {receiveStage === 'review' && <div className="pt-5">
                 <h3 className="mb-1 text-base font-semibold">Review before import</h3>
                 <p className="mb-2 text-xs leading-5 text-[#626a62]">{activeBundle.readings.length} reading{activeBundle.readings.length === 1 ? '' : 's'} for {activeBundle.name}. Existing readings will remain unchanged.</p>
