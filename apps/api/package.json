@@ -10,8 +10,8 @@
     "db:migrate": "prisma migrate dev --name init",
     "cf:dev": "wrangler dev",
     "cf:deploy": "wrangler deploy",
-    "cf:migrate": "wrangler d1 migrations apply phasmaframe --remote",
-    "cf:migrate:local": "wrangler d1 migrations apply phasmaframe --local"
+    "cf:migrate": "wrangler d1 migrations apply kasigla --remote",
+    "cf:migrate:local": "wrangler d1 migrations apply kasigla --local"
   },
   "dependencies": {
     "@app/shared": "workspace:*",

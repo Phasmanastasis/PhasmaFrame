@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "phasmaframe-web",
-  "compatibility_date": "2026-10-04",
+  "compatibility_date": "2026-10-03",
   // Static Astro build output. `astro build` emits a fully static site here
   // (no SSR adapter is configured), which Pages serves directly.
   "pages_build_output_dir": "dist"

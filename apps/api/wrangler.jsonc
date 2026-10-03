@@ -1,26 +1,38 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "phasmaframe-api",
+  "name": "kasigla-api",
+  "account_id": "04a311dd63265e896ca15a8e8124f144",
   "main": "src/worker.ts",
-  "compatibility_date": "2026-10-04",
+  "compatibility_date": "2026-10-03",
   // nodejs_compat is required by the Prisma client / @prisma/adapter-d1 on Workers.
   "compatibility_flags": ["nodejs_compat"],
+  // Keep the *.workers.dev URL as a direct fallback in addition to the custom-domain route.
+  "workers_dev": true,
   "observability": {
     "enabled": true
   },
+  // Serve the API from the shared custom domain so the web app can call it
+  // same-origin at /api/* (which also removes the need for CORS). The web app's
+  // static assets are served by the Pages project on the same hostname; this
+  // route only claims the /api/* path for the Worker.
+  "routes": [
+    {
+      "pattern": "kasigla.kuyacarlo.dev/api/*",
+      "zone_name": "kuyacarlo.dev"
+    }
+  ],
   "d1_databases": [
     {
       // Available in the Worker as env.DB (see src/worker.ts Env).
       "binding": "DB",
-      "database_name": "phasmaframe",
-      // Fill in after `wrangler d1 create phasmaframe` (or from the dashboard).
-      // Left as a placeholder so the config is committable without an account.
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "database_name": "kasigla",
+      "database_id": "34bf1e16-5396-43c3-9bfb-3b3fb7e3e00d",
       "migrations_dir": "migrations"
     }
   ],
   "vars": {
-    // Override per environment with the deployed Pages URL. Not a secret.
-    "WEB_ORIGIN": "http://localhost:4321"
+    // Same-origin in production (/api on the custom domain) so CORS is not needed;
+    // this value only applies if the API is called cross-origin (e.g. local dev).
+    "WEB_ORIGIN": "https://kasigla.kuyacarlo.dev"
   }
 }
