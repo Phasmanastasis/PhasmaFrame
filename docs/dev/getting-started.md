@@ -184,6 +184,15 @@ Deploying is optional for local dev. If you will deploy:
   cannot create/delete resources or change permissions. Run `just komodo-probe` to see
   exactly what it can access. Full flow and troubleshooting: [deployment.md](./deployment.md).
 
+### Cloudflare deploy (alternative target)
+
+Also optional. To deploy to Cloudflare (Workers + D1 API, Pages web):
+
+- Authenticate Wrangler with `npx wrangler login` (or a `CLOUDFLARE_API_TOKEN` — a secret,
+  never committed). Wrangler is already a dev dependency; no global install needed.
+- Validate without an account using `just cf-check`, run locally with `just cf-dev-api` /
+  `just cf-dev-web`. Full flow and live URLs: [deployment-cloudflare.md](./deployment-cloudflare.md).
+
 ## Verify your setup
 
 Work through this checklist; everything should succeed before you start coding.

@@ -191,6 +191,28 @@ These wrap `scripts/komodo-deploy.sh`. Deploys are governed by a strict least-pr
 rule (one named stack, confirm before acting, no resource/permission changes). Full flow,
 prerequisites, and troubleshooting: `docs/dev/deployment.md`.
 
+## Cloudflare (alternative deploy)
+
+A second, independent deploy target: the API runs on **Cloudflare Workers** backed by
+**D1**, and the web app on **Cloudflare Pages**, both served from a single origin
+(`kasigla.kuyacarlo.dev`, with the API same-origin at `/api/*`). [Wrangler](https://developers.cloudflare.com/workers/wrangler/)
+is a dev dependency in both apps; authenticate with `npx wrangler login` (or a
+`CLOUDFLARE_API_TOKEN` — a secret, never committed). Entry points:
+
+```bash
+just cf-dev-api        # run the API locally on the Workers runtime (local D1)
+just cf-dev-web        # run the web app locally on the Pages runtime
+just cf-migrate-local  # apply D1 SQL migrations to the local database
+just cf-migrate        # apply D1 SQL migrations to the remote database
+just cf-check          # validate the Worker config + bundle (no account needed)
+just cf-deploy-api     # deploy the API Worker (attaches the /api/* route)
+just cf-deploy-web     # build + deploy the web app to Pages
+```
+
+Config lives in `apps/api/wrangler.jsonc` and `apps/web/wrangler.jsonc`; D1 schema is in
+`apps/api/migrations/` (Prisma Migrate does not support D1). Full flow, prerequisites, and
+the live URLs: `docs/dev/deployment-cloudflare.md`.
+
 ## Keeping this in sync
 
 After editing recipes or scripts, re-run and update this document to match:
