@@ -16,6 +16,11 @@ installation instructions, see [getting-started.md](./getting-started.md).
   the project directory. `just` loads `.env` on its own via `set dotenv-load`, so direnv
   is a convenience for your interactive shell, not a requirement.
 - **Prisma** manages the database schema and the local SQLite database for the API.
+- **Docker** (+ Compose) builds and runs the API as a container; the compose file doubles
+  as the Komodo Stack definition.
+- **Komodo** is the deploy target. The deploy tooling calls Komodo's HTTP API using
+  credentials from `.env`; it is governed by a strict least-privilege rule
+  (see `docs/dev/deployment.md` and the Komodo deploy steering).
 
 ## just
 
@@ -56,6 +61,13 @@ Conventions used in the `justfile`:
 | `lint`        | —                | Run every private lint helper in order.                             | `just lint`       |
 | `format`      | —                | Format source files in place (Prisma schema).                       | `just format`     |
 | `ci`          | —                | What CI runs: `db-generate` → `check` → `build`.                    | `just ci`         |
+| `docker-build`| —                | Build the production image (`docker build`).                        | `just docker-build`|
+| `docker-config`| —               | Validate the compose file (`docker compose config`).                | `just docker-config`|
+| `docker-up`   | —                | Start the compose stack detached.                                   | `just docker-up`  |
+| `docker-down` | —                | Stop the compose stack.                                             | `just docker-down`|
+| `komodo-probe`| —                | Read-only: Komodo version, visible stacks/servers, target stack.    | `just komodo-probe`|
+| `komodo-status`| —               | Read-only: target Komodo stack status.                              | `just komodo-status`|
+| `komodo-deploy`| —               | Deploy the Komodo stack (prompts for confirmation).                 | `just komodo-deploy`|
 
 None of the current recipes take parameters.
 
@@ -133,6 +145,51 @@ and the local SQLite database. You normally use it through just:
 - `just db-migrate` — create/apply migrations against the local SQLite DB.
 - `just format` → `format-prisma` — format the schema file.
 - `just lint` → `lint-prisma` — validate the schema.
+
+## Docker
+
+The API ships as a container. Files at the repo root:
+
+- `Dockerfile` — lean multi-stage build (digest-pinned `node:22-bookworm-slim`, pnpm via
+  Corepack with `--frozen-lockfile`, BuildKit cache mounts, a `pnpm deploy` bundle,
+  non-root `node` user, `tini`, healthcheck on `/api/health`, exec-form `CMD`). No secrets
+  or `.env` are copied in.
+- `.dockerignore` — keeps the context small and secrets out (excludes `.env*` except
+  `.env.example`, `.git`, `node_modules`, `dist`, `docs`, `.agents`, `.kiro`, …).
+- `docker-compose.yaml` — no `version:` key; env via `environment`/`env_file` with
+  defaults; `restart: unless-stopped`; a named volume for the SQLite DB; healthcheck.
+
+Common commands (via just):
+
+```bash
+just docker-build     # build the image (BuildKit)
+just docker-config    # validate the compose file
+just docker-up        # run the stack detached
+just docker-down      # stop it
+```
+
+Enable BuildKit (`DOCKER_BUILDKIT=1`, default in recent Docker) for the cache mounts. For
+the full checklist and how to review these files, see the `docker-best-practices` skill
+(`.kiro/skills/docker-best-practices/SKILL.md`).
+
+## Komodo (deploy)
+
+Deployment targets a [Komodo](https://komo.do) instance, which runs the compose file as a
+**Stack**. The deploy tooling talks to Komodo's HTTP API
+(`POST {KOMODO_URL}/{read|write|execute}/{Request}`, headers `X-Api-Key` / `X-Api-Secret`).
+
+Credentials come from `.env` only (`KOMODO_URL`, `KOMODO_API_KEY`, `KOMODO_API_SECRET`) —
+never commit or print them. Entry points:
+
+```bash
+just komodo-probe     # read-only: version, visible stacks/servers, target stack
+just komodo-status    # read-only: target stack status
+just komodo-deploy    # deploy the stack (asks you to type the stack name to confirm)
+```
+
+These wrap `scripts/komodo-deploy.sh`. Deploys are governed by a strict least-privilege
+rule (one named stack, confirm before acting, no resource/permission changes). Full flow,
+prerequisites, and troubleshooting: `docs/dev/deployment.md`.
 
 ## Keeping this in sync
 

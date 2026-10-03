@@ -123,7 +123,22 @@ every edit, by design). Check the current state with `direnv status`.
 The repo's `.envrc` loads a root `.env` (if present) and `apps/api/.env`, and watches those
 plus `apps/api/.env.example` so the environment reloads when they change.
 
-## 5. Project setup
+## 5. Docker (for building/running the container and deploying)
+
+Needed to build the image, run `docker compose`, and deploy to Komodo.
+
+- **macOS / Windows:** install [Docker Desktop](https://docs.docker.com/get-docker/)
+  (on Windows, enable the WSL 2 backend).
+- **Linux:** install [Docker Engine](https://docs.docker.com/engine/install/) +
+  the Compose plugin (`docker compose`, not the legacy `docker-compose`).
+
+Verify:
+```bash
+docker --version
+docker compose version
+```
+
+## 6. Project setup
 
 ```bash
 # 1. Clone
@@ -142,6 +157,11 @@ just install            # → pnpm install
 # 5. Create the API env file (the API reads apps/api/.env)
 cp apps/api/.env.example apps/api/.env
 
+# 5b. (deploy only) Create the root env for deploy tooling and add Komodo creds
+cp .env.example .env
+#    then edit .env and fill KOMODO_API_KEY / KOMODO_API_SECRET from the Komodo UI.
+#    KOMODO_URL already has a default. NEVER commit .env.
+
 # 6. Create the local SQLite database
 just db-migrate         # → pnpm run db:migrate
 
@@ -153,6 +173,16 @@ Then open the web app at <http://localhost:4321>. The API runs at
 <http://localhost:3000>.
 
 > Tip: `just dev-api` and `just dev-web` run a single side if you only need one.
+
+### Komodo deploy credentials & permissions
+
+Deploying is optional for local dev. If you will deploy:
+
+- Put `KOMODO_URL`, `KOMODO_API_KEY`, `KOMODO_API_SECRET` in the root `.env` (the key/secret
+  come from the Komodo UI → *Settings → Profile → API Keys* for the **service user**).
+- The service user is **non-admin by design**: it may deploy the one project stack but
+  cannot create/delete resources or change permissions. Run `just komodo-probe` to see
+  exactly what it can access. Full flow and troubleshooting: [deployment.md](./deployment.md).
 
 ## Verify your setup
 

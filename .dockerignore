@@ -1,0 +1,39 @@
+# Keep the build context small and keep secrets out of the image.
+
+# Secrets / local env — never copy into the image
+.env
+.env.*
+!.env.example
+
+# VCS and tooling
+.git
+.gitignore
+.github
+.envrc
+
+# Dependencies and build outputs (reinstalled/rebuilt inside the image)
+node_modules
+**/node_modules
+dist
+**/dist
+.astro
+**/.astro
+*.tsbuildinfo
+
+# Local database files
+apps/api/prisma/*.db
+apps/api/prisma/*.db-journal
+
+# Docs and agent/editor tooling — not needed at runtime
+docs
+.agents
+.kiro
+AGENTS.md
+README.md
+LICENSE
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose.yaml
+docker-compose.yml

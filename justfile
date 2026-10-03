@@ -16,6 +16,9 @@ set shell := ["bash", "-cu"]
 export API_URL := "http://localhost:" + env_var_or_default("PORT", "3000")
 export WEB_URL := env_var_or_default("WEB_ORIGIN", "http://localhost:4321")
 
+# Docker image tag for build/deploy (override: `just IMAGE=foo docker-build`).
+IMAGE := env_var_or_default("API_IMAGE", "phasmaframe-api:latest")
+
 # Choose recipes
 default:
     @ just -l
@@ -105,3 +108,31 @@ ci:
     just db-generate
     just check
     just build
+
+# Build the production Docker image
+docker-build:
+    DOCKER_BUILDKIT=1 docker build -t {{ IMAGE }} .
+
+# Validate the compose file (resolves env + checks schema)
+docker-config:
+    docker compose config
+
+# Start the stack with docker compose (detached)
+docker-up:
+    docker compose up -d
+
+# Stop the compose stack
+docker-down:
+    docker compose down
+
+# Read-only: probe what the Komodo service user can see (version, stacks, servers, target stack)
+komodo-probe:
+    bash scripts/komodo-deploy.sh probe
+
+# Read-only: show the target Komodo stack's status
+komodo-status:
+    bash scripts/komodo-deploy.sh status
+
+# Deploy the project's Komodo stack (asks for human confirmation first)
+komodo-deploy:
+    bash scripts/komodo-deploy.sh deploy
