@@ -59,14 +59,22 @@ the Workers runtime. Nothing here changes the Komodo path.
 
 The site is a static Astro build, so Pages serves `dist/` directly.
 
+The `phasmaframe-web` Pages project is connected to `Phasmanastasis/PhasmaFrame` in
+the `magallanes` Cloudflare account. Pull requests and other branches build public
+preview deployments, and Pages posts the preview link on pull requests. Production
+deployments from `master` are currently disabled.
+
+Push a commit to a branch to trigger its preview deployment. The Pages build runs from
+the repository root with `pnpm --filter @app/web run build`, publishing
+`apps/web/dist`. The preview branch setting is `all`.
+
 ```bash
 # Point the web app at the deployed API, then build + deploy:
 PUBLIC_API_URL=https://<your-worker-subdomain>.workers.dev just cf-deploy-web
 ```
 
-`cf-deploy-web` runs the build and then `wrangler pages deploy dist
---project-name=phasmaframe-web`. For a first deploy, Wrangler will offer to create the
-Pages project.
+`cf-deploy-web` performs a Wrangler upload to Pages. Use the Git integration for PR
+previews so the build runs from the branch and Pages adds its preview link to the PR.
 
 ## Secrets
 
