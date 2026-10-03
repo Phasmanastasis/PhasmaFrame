@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "Kasigla Patient",
+    "slug": "kasigla-patient",
+    "scheme": "kasigla-patient",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": { "backgroundColor": "#f5f7f4" },
+    "ios": { "supportsTablet": true },
+    "android": { "package": "dev.kuyacarlo.kasigla.patient", "adaptiveIcon": { "backgroundColor": "#e6f2ee" } },
+    "web": { "bundler": "metro", "name": "Kasigla Patient" }
+  }
+}

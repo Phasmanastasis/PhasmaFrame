@@ -483,7 +483,253 @@ Avoid:
 
 ---
 
-## 10. Accessibility
+## 10. Product Scope and Navigation Model
+
+> Sections 10-12 extend the brand system with product implementation detail for the
+> Offline Hypertension Follow-Up MVP. They are inferred from [`prd.md`](./prd.md) and
+> [`sdd.md`](./sdd.md) and are written platform-agnostically: a "screen" is one primary
+> view, "navigation" is movement between screens, and a "component" is a reusable UI
+> element. Map these to the chosen platform's idioms (web routes/pages or Android
+> navigation destinations) during implementation. All visual styling follows the brand
+> tokens, type scale, iconography, and layout rules in Sections 1-9.
+
+### Product summary
+
+An offline-first application for two roles that share one device model:
+
+- **Patient / caregiver** records measured blood-pressure readings and sends one
+  patient's record to a health worker during an in-person visit.
+- **Barangay Health Worker (BHW)** receives and reviews the record, adds a visit note,
+  and opens an RHU/YAKAP-ready summary.
+
+All core flows must complete without internet. Transfer is manual, user-initiated,
+device-to-device, and handles one patient at a time. Imports are atomic and repeat-safe:
+existing data is never overwritten, and duplicate entries are skipped.
+
+### Navigation map
+
+```
+Home / role choice
+  |- Patient list
+  |    `- Patient summary & history
+  |         |- Add reading
+  |         |- Add visit note
+  |         |- RHU-ready summary
+  |         `- Send record --> Transfer review & confirmation --> Import receipt
+  `- Receive record ---------> Transfer review & confirmation --> Import receipt
+```
+
+Both roles share the same navigation. **Send record** starts from a selected patient
+(sender side); **Receive record** is reachable from Home (receiver side). Both transfer
+paths converge on a shared review/confirmation step and end at an import receipt.
+
+### Core data concepts (from the ERD)
+
+Screens read and write these entities; see [`sdd.md`](./sdd.md) for the authoritative ERD.
+
+- **Patient** - local UUID and a minimal display label/code. No national identifier.
+- **BloodPressureReading** - systolic, diastolic, `measuredAt`, `measuredBy`,
+  `enteredAt`, `enteredBy`, optional note.
+- **VisitNote** - author, `createdAt`, text.
+- **TransferBundle** - schema version, one patient, selected readings and notes.
+
+### Cross-cutting UI requirements
+
+Every screen must honor these, consistent with Sections 9 and 13:
+
+- **Offline-first:** no screen may depend on live connectivity except the active transfer
+  step. Show a calm offline/low-connectivity indicator rather than blocking errors.
+- **Reassurance:** confirm patient actions with gentle, plain-language confirmations
+  (Tagalog or English per community context).
+- **Touch targets:** interactive elements maintain a minimum 44 x 44 px target.
+- **Labels:** icon-only controls always carry a text label (Section 5).
+- **Contrast and focus:** WCAG 2.2 AA contrast and visible focus states (Section 13).
+- **State coverage:** each screen defines its empty, loading, error, and (where relevant)
+  offline states.
+
+---
+
+## 11. Screen Specifications
+
+Each screen below lists its purpose, the data it shows, key components, primary actions,
+and states. Styling tokens refer to Sections 3 (color), 4 (typography), 5 (iconography),
+and 7 (layout).
+
+### 11.1 Home / role choice
+
+- **Purpose:** entry point; the user chooses the Patient/caregiver path or the BHW path.
+- **Content:** app logo and brand line (Section 2); two large role options; a persistent
+  offline indicator.
+- **Components:** Role card (x2), Offline banner, App header.
+- **Primary actions:** choose **Patient / caregiver** -> Patient list; choose **BHW** with
+  a quick entry to **Receive record**.
+- **States:** default only. No network required.
+- **Styling:** Deep Sea Teal field acceptable for the brand area; role cards use light
+  surfaces (Surface Tint / White) with teal borders; headings in Manrope, labels in
+  Nunito.
+
+### 11.2 Patient list
+
+- **Purpose:** browse and select a patient to view or send.
+- **Content:** list of patients by display label/code; count; search/filter if present;
+  action to add a patient.
+- **Components:** Patient list item, Search field (optional), Empty-state panel, Primary
+  action button ("Add patient").
+- **Primary actions:** open a patient -> Patient summary & history; add a patient.
+- **States:**
+  - *Empty:* reassuring message with a clear "Add patient" action.
+  - *Populated:* scannable list; items show label/code and last-reading date if available.
+  - *Loading:* lightweight placeholder.
+- **Styling:** cards at 10-16 px radius; Atkinson Hyperlegible for list metadata.
+
+### 11.3 Patient summary & history
+
+- **Purpose:** central hub for one patient; dated history and entry points to all patient
+  actions.
+- **Content:** patient display label/code; chronological list of BloodPressureReadings
+  (systolic/diastolic, `measuredAt`, `measuredBy`, `enteredBy`, note indicator); VisitNotes;
+  summary header.
+- **Components:** Patient header, BP reading card, Visit note card, Section dividers,
+  action group (Add reading, Add visit note, Send record, RHU-ready summary).
+- **Primary actions:** Add reading; Add visit note; **Send record**; open **RHU-ready
+  summary**.
+- **States:**
+  - *Empty history:* prompt to add the first reading.
+  - *Populated:* readings grouped by date, newest first.
+  - *Offline:* fully functional; offline indicator visible.
+- **Styling:** H3 for the patient name; Body for reading values; Dawn Gold reserved for a
+  single focal signal (e.g., an attention state), not routine.
+
+### 11.4 Add reading
+
+- **Purpose:** capture one blood-pressure reading offline.
+- **Content / fields:** systolic, diastolic, measurement time (`measuredAt`), who measured
+  (`measuredBy`), who entered (`enteredBy`, may default to current user), optional note.
+- **Components:** Reading entry form, numeric inputs, date/time picker, person selectors
+  for measurer/recorder, optional note field, Save button, Cancel.
+- **Primary actions:** Save locally -> return to Patient summary with the new reading
+  visible; Cancel discards.
+- **States:**
+  - *Validation:* systolic/diastolic required and within plausible ranges; measurement
+    time required; non-color validation cues (Sections 5 and 13).
+  - *Save confirmation:* reassuring confirmation; the reading persists across app restart.
+- **Styling:** Atkinson Hyperlegible for inputs and helper text; 4 px spacing grid.
+
+### 11.5 Add visit note
+
+- **Purpose:** BHW records a free-text note for a patient during a visit.
+- **Content / fields:** note text, author (`createdAt` set on save).
+- **Components:** Visit note form (multiline text), Save, Cancel.
+- **Primary actions:** Save -> note appears in Patient summary history; Cancel discards.
+- **States:** empty text disables Save; save confirmation on success.
+- **Styling:** generous line length (45-75 characters per Section 4).
+
+### 11.6 Send record (sender)
+
+- **Purpose:** sender selects one patient and begins a nearby device transfer.
+- **Content:** the selected patient's identity for confirmation; a discovery list of
+  nearby receiving devices; transfer status.
+- **Components:** Patient confirmation banner, Transfer discovery list (nearby devices),
+  Device item, Cancel/Retry controls, status indicator.
+- **Primary actions:** pick the receiving device -> proceed to Transfer review &
+  confirmation; Cancel.
+- **States:**
+  - *Discovering:* searching for nearby devices (this step is the only connectivity-
+    dependent flow; it uses device-to-device transport, not internet).
+  - *No devices found:* retry/cancel guidance.
+  - *Error:* discovery/connection failure keeps data unchanged; offer retry/cancel.
+- **Styling:** calm status copy; avoid alarmist language (Section 8).
+
+### 11.7 Receive record (receiver)
+
+- **Purpose:** receiver (typically BHW) makes the device discoverable and accepts an
+  incoming transfer.
+- **Content:** discoverable status; incoming request with sender/patient identity.
+- **Components:** Receive status panel, Incoming request prompt, Accept/Decline controls.
+- **Primary actions:** Accept -> Transfer review & confirmation; Decline/Cancel.
+- **States:** waiting; incoming request; connection error (data unchanged, retry/cancel).
+- **Styling:** consistent with Send record for a coherent transfer experience.
+
+### 11.8 Transfer review & confirmation (shared)
+
+- **Purpose:** both users verify the bundle before any data changes; receiver confirms
+  import.
+- **Content:** patient identifier/label; entry counts (readings and notes); schema version
+  validity; a preview of what will be imported.
+- **Components:** Bundle preview panel, Entry-count summary, Patient/device verification
+  row, Confirm import button, Cancel.
+- **Primary actions:** Confirm import (receiver) -> atomic commit -> Import receipt; Cancel
+  leaves both devices unchanged.
+- **States:**
+  - *Valid bundle:* show counts and preview; enable Confirm.
+  - *Unknown/invalid schema version:* reject with a clear message; no import.
+  - *Validation failure:* no partial change; retry/cancel.
+- **Styling:** verification details legible (Atkinson Hyperlegible); Confirm is the
+  obvious primary action.
+
+### 11.9 Import receipt (shared)
+
+- **Purpose:** confirm the outcome of a completed import.
+- **Content:** counts of newly imported readings and notes; count of duplicates skipped;
+  confirmation that existing data was preserved.
+- **Components:** Receipt summary, counts list, Done/Return action.
+- **Primary actions:** Done -> return to Patient summary (showing merged history).
+- **States:** success with counts; "nothing new (all duplicates skipped)" variant.
+- **Styling:** reassuring confirmation tone; Dawn Gold may mark the single key success
+  figure if a focal accent is wanted.
+
+### 11.10 RHU / YAKAP-ready summary
+
+- **Purpose:** present a concise, shareable summary of a patient's history for the next
+  RHU/YAKAP visit.
+- **Content:** patient label/code; condensed reading history with values, time, measurer,
+  recorder; visit notes; generated-on timestamp. (Direct digital transfer to the RHU is
+  out of scope / future work per prd.md.)
+- **Components:** Summary header, Readings table/list, Visit notes section, Export/share
+  affordance (print or share-sheet as the platform allows).
+- **Primary actions:** view; export/share if available; return to Patient summary.
+- **States:** populated; empty (no readings yet).
+- **Styling:** optimized for legibility and, where printed, for a dark-on-light layout per
+  Section 13 contrast guidance.
+
+---
+
+## 12. Component Inventory
+
+Reusable components referenced by Section 11. All inherit brand tokens, the type scale,
+and layout geometry from Sections 3-7.
+
+| Component | Used by | Notes |
+| --- | --- | --- |
+| App header | All screens | Logo/brand area, optional back action. |
+| Offline banner | All screens | Calm connectivity indicator; never blocks offline use. |
+| Role card | Home | Large, high-contrast choice target; >= 44 x 44 px. |
+| Patient list item | Patient list | Label/code + last-reading date; opens summary. |
+| Search field | Patient list | Optional; filters by label/code. |
+| Empty-state panel | Patient list, history | Reassuring copy + a clear primary action. |
+| Patient header | Summary, RHU summary | Patient label/code and summary context. |
+| BP reading card | Summary, RHU summary | Systolic/diastolic, time, measurer, recorder, note. |
+| Visit note card | Summary, RHU summary | Author, date, text. |
+| Reading entry form | Add reading | Numeric inputs, date/time picker, person selectors, note. |
+| Visit note form | Add visit note | Multiline text; author/createdAt on save. |
+| Person selector | Add reading | Choose/record measurer and recorder. |
+| Transfer discovery list | Send record | Nearby devices; device items with status. |
+| Receive status panel | Receive record | Discoverable state + incoming request prompt. |
+| Bundle preview panel | Transfer review | Patient identity, entry counts, schema validity. |
+| Confirmation dialog | Transfer review, destructive actions | Verify before committing. |
+| Receipt summary | Import receipt | Imported counts and duplicates skipped. |
+| Primary action button | Many | One obvious primary action per screen (Section 9). |
+| Confirmation toast/snackbar | Add reading/note, import | Gentle success feedback. |
+
+Component rules:
+
+- One icon family and stroke weight across the app (Section 5).
+- Primary actions are reachable and obvious; secondary actions stay visually quieter.
+- All interactive components meet the 44 x 44 px target and expose text labels.
+- Error and offline states use copy and iconography, never color alone (Sections 5, 13).
+
+---
+## 13. Accessibility
 
 - Target WCAG 2.2 AA contrast for text and interactive controls.
 - Do not place mint body text on white backgrounds.
@@ -498,7 +744,7 @@ Avoid:
 
 ---
 
-## 11. Implementation Checklist
+## 14. Implementation Checklist
 
 Before publishing a Kasigla touchpoint, confirm:
 
@@ -519,7 +765,7 @@ Before publishing a Kasigla touchpoint, confirm:
 
 ---
 
-## 12. Asset Summary
+## 15. Asset Summary
 
 | Asset | Format | Purpose |
 | --- | --- | --- |

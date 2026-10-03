@@ -1,9 +1,11 @@
+import { Save } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TextInput } from "react-native";
 import { getStore } from "../../../src/domain/store";
 import { localId, validateReading } from "../../../src/domain/validation";
-import { styles } from "../../../src/ui/theme";
+import { OfflineBanner, PrimaryButton } from "../../../src/ui/components";
+import { palette, styles } from "../../../src/ui/theme";
 
 export default function AddReading() {
   const { id, role } = useLocalSearchParams<{ id: string; role?: string }>();
@@ -36,6 +38,7 @@ export default function AddReading() {
 
   return (
     <ScrollView style={styles.screen}>
+      <OfflineBanner />
       <Text style={styles.label}>Systolic (mmHg)</Text>
       <TextInput
         style={styles.input}
@@ -43,7 +46,7 @@ export default function AddReading() {
         value={systolic}
         onChangeText={setSystolic}
         placeholder="e.g. 140"
-        placeholderTextColor="#64748b"
+        placeholderTextColor={palette.nightTide}
         accessibilityLabel="Systolic value"
       />
       <Text style={styles.label}>Diastolic (mmHg)</Text>
@@ -53,7 +56,7 @@ export default function AddReading() {
         value={diastolic}
         onChangeText={setDiastolic}
         placeholder="e.g. 90"
-        placeholderTextColor="#64748b"
+        placeholderTextColor={palette.nightTide}
         accessibilityLabel="Diastolic value"
       />
       <Text style={styles.label}>Note (optional)</Text>
@@ -62,7 +65,7 @@ export default function AddReading() {
         value={note}
         onChangeText={setNote}
         placeholder="Context for this reading"
-        placeholderTextColor="#64748b"
+        placeholderTextColor={palette.nightTide}
         accessibilityLabel="Optional note"
       />
 
@@ -72,9 +75,7 @@ export default function AddReading() {
         </Text>
       ))}
 
-      <TouchableOpacity style={styles.button} onPress={onSave}>
-        <Text style={styles.buttonText}>Save reading</Text>
-      </TouchableOpacity>
+      <PrimaryButton label="Save reading" icon={Save} onPress={onSave} />
     </ScrollView>
   );
 }

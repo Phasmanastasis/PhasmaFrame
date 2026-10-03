@@ -133,7 +133,7 @@ wraps these rather than duplicating them.
 | `db:generate` | `pnpm --filter @app/api db:generate`                   | CI, `just db-generate`             |
 | `db:migrate`  | `pnpm --filter @app/api db:migrate`                    | README, `just db-migrate`          |
 
-Per-app dev commands (`pnpm --filter @app/api dev` / `@app/web dev`) are invoked directly
+Per-app dev commands (`pnpm --filter @app/api dev` / `@app/web dev` / `@app/patient dev`) are invoked directly
 by the `dev-api` / `dev-web` recipes, so there are no `dev:api` / `dev:web` scripts to keep
 in sync.
 
@@ -142,8 +142,12 @@ Each workspace has its own scripts (not called directly in day-to-day work):
 - `apps/api`: `dev` (`tsx watch src/index.ts`), `build` (`tsc`), `check` (`tsc --noEmit`),
   `db:generate` (`prisma generate`), `db:migrate` (`prisma migrate dev`),
   `test` (`node --import tsx --test`).
-- `apps/web`: `dev` (`astro dev`), `build` (`astro build`), `check` (`astro check`). No
+- `apps/web`: `dev` (`astro dev`), `check` (`astro check`), `build` (`astro build`,
+  then exports and stages the sibling Expo patient web app when `apps/patient` exists). No
   `test` script — web is UI-only (see [testing.md](./testing.md)).
+- `apps/patient`: `dev` (`expo start`), `build` (`expo export --platform web`),
+  `check` (`tsc --noEmit`). Start the Expo web preview on port 4322 with
+  `pnpm --filter @app/patient dev -- --web --port 4322`. The app uses Expo SDK 51 / React Native 0.74 to target Android 6+ (API 23).
 - `packages/shared`: `build` / `check` (`tsc --noEmit`), `test` (`node --import tsx --test`).
 - `apps/mobile`: `check` (`tsc --noEmit`), `test` (`node --import tsx --test`), plus Expo
   dev/export scripts.

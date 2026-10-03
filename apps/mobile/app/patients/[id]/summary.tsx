@@ -1,9 +1,11 @@
+import { Download } from "lucide-react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { getStore } from "../../../src/domain/store";
 import { toCsv } from "../../../src/domain/summary";
-import { styles, theme } from "../../../src/ui/theme";
+import { OfflineBanner, PrimaryButton } from "../../../src/ui/components";
+import { fonts, styles, theme } from "../../../src/ui/theme";
 
 export default function RhuSummary() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -15,6 +17,7 @@ export default function RhuSummary() {
 
   return (
     <ScrollView style={styles.screen}>
+      <OfflineBanner />
       <Text style={styles.title}>{patient?.label ?? id}</Text>
       <Text style={styles.subtitle}>
         Review and export only. This screen does not send data to an RHU.
@@ -25,18 +28,22 @@ export default function RhuSummary() {
         <Text style={styles.cardMeta}>Visit notes: {notes.length}</Text>
       </View>
 
-      <TouchableOpacity
-        style={styles.button}
+      <PrimaryButton
+        label="Export summary as CSV"
+        icon={Download}
         onPress={() => setCsv(toCsv(readings))}
-      >
-        <Text style={styles.buttonText}>Export summary as CSV</Text>
-      </TouchableOpacity>
+      />
 
       {csv ? (
         <View style={[styles.card, { marginTop: 12 }]}>
-          <Text style={styles.ok}>CSV generated:</Text>
+          <Text style={styles.ok}>CSV generated</Text>
           <Text
-            style={{ color: theme.textMuted, fontFamily: "monospace", fontSize: 12, marginTop: 6 }}
+            style={{
+              color: theme.textMuted,
+              fontFamily: fonts.body,
+              fontSize: 12,
+              marginTop: 6,
+            }}
             selectable
           >
             {csv}
