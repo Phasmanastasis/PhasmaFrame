@@ -39,7 +39,7 @@ export interface ImportResult {
   notesSkipped: number;
 }
 
-class InMemoryStore implements LocalStore {
+export class InMemoryStore implements LocalStore {
   private patients = new Map<string, Patient>();
   private readings = new Map<string, BloodPressureReading>();
   private visitNotes = new Map<string, VisitNote>();
