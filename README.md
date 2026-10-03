@@ -113,6 +113,8 @@ PhasmaFrame/
   apps/
     web/            Astro site with React islands and Tailwind CSS
     api/            Hono server, Zod validation, Prisma data access
+    patient/        Expo (React Native) patient/caregiver app, web-exportable as a PWA
+    mobile/         Expo (React Native) app for patient + BHW flows, web-exportable as a PWA
   packages/
     shared/         API schemas and TypeScript contracts for both apps
   docs/
@@ -125,6 +127,11 @@ PhasmaFrame/
   docker-compose.yaml  Compose stack (doubles as the Komodo Stack definition)
   justfile          Task recipes (run `just` to list them)
 ```
+
+The web app's production `build` additionally exports the `apps/patient` Expo app and serves
+it at the web root `/` (overwriting the Astro `index.html`); see
+[RUNNING.md](./RUNNING.md) for details. `just dev` runs the plain Astro dev server without
+that step.
 
 ## Documentation
 
