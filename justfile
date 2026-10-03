@@ -136,3 +136,34 @@ komodo-status:
 # Deploy the project's Komodo stack (asks for human confirmation first)
 komodo-deploy:
     bash scripts/komodo-deploy.sh deploy
+
+# --- Cloudflare (alternative deploy target: Workers API + Pages web) ---
+
+# Run the API locally on the Workers runtime (wrangler dev, uses local D1)
+cf-dev-api:
+    pnpm --filter @app/api run cf:dev
+
+# Run the web app locally on the Pages runtime (wrangler pages dev)
+cf-dev-web:
+    pnpm --filter @app/web run cf:dev
+
+# Apply D1 SQL migrations to the LOCAL D1 database (safe, no account)
+cf-migrate-local:
+    pnpm --filter @app/api run cf:migrate:local
+
+# Apply D1 SQL migrations to the REMOTE D1 database (needs CF auth)
+cf-migrate:
+    pnpm --filter @app/api run cf:migrate
+
+# Deploy the API to Cloudflare Workers (needs CF auth + a real D1 database_id)
+cf-deploy-api:
+    pnpm --filter @app/api run cf:deploy
+
+# Build then deploy the web app to Cloudflare Pages (needs CF auth)
+cf-deploy-web:
+    just build
+    pnpm --filter @app/web run cf:deploy
+
+# Validate the Worker config + bundle without deploying (no account needed)
+cf-check:
+    cd apps/api && npx wrangler deploy --dry-run
