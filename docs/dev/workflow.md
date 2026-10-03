@@ -32,3 +32,35 @@ bundling.**
 For the full workflow — ensuring a Linear issue exists first, implementation steps,
 reporting back, and the repository's defaults — read the canonical steering file linked
 above.
+
+## Stack merge guide (dependent PRs)
+
+Some features ship as a **stack**: a chain of PRs where each PR's base branch is the PR
+below it instead of `master` (for example the Android app work, GitHub #18–#25). Merge a
+stack carefully so you don't create conflicts or orphan a branch.
+
+- **Merge bottom-up.** Merge the lowest PR (the one whose base is `master`) first, then
+  the next one up, and so on. Never merge a higher PR before the one it depends on.
+- **After a squash-merge, retarget + rebase the next PR.** If the team squash-merges, the
+  merged commit on `master` has a different hash than the branch history, so the next PR
+  up will show conflicts against its now-merged base. Fix it by retargeting that PR to
+  `master` and rebasing it onto `master`, dropping the already-merged commits:
+
+  ```bash
+  # <old-base> = the branch that was just squash-merged
+  # <branch>   = the next PR up in the stack
+  git rebase --onto master <old-base> <branch>
+  git push --force-with-lease origin <branch>
+  ```
+
+  Then change that PR's base to `master` in the GitHub UI (or it may update
+  automatically once its base branch is deleted). Repeat for each PR as you climb the
+  stack. A plain `git merge` is **not** the fix here — it reintroduces the already-merged
+  changes.
+- **Don't delete a base branch while a PR above still uses it.** Deleting a branch that is
+  another open PR's base will auto-close or re-target that PR unexpectedly. Only delete a
+  branch after everything stacked on top of it has been retargeted or merged.
+
+With GitHub's native stacked PRs (`gh stack`), merging the bottom PR and running
+`gh stack submit` again can re-sync the remaining bases for you, but the rules above still
+hold — review the retargeted PRs before merging the next one.
