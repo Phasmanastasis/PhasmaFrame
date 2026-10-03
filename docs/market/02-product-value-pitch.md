@@ -9,8 +9,8 @@ source verification are completed.
 ## Lead message
 
 User-initiated **offline transfer** of a patient's blood-pressure history from a
-patient/caregiver device to a BHW phone or tablet. The BHW reviews the record and prepares
-an RHU/YAKAP-ready summary.
+patient/caregiver device to a BHW phone or tablet. The BHW reviews the summary and can
+**export it as CSV** (for Excel) to provide to the RHU through the existing process.
 
 ## Pitch boundary
 
@@ -20,15 +20,21 @@ an RHU/YAKAP-ready summary.
 
 ## Two-minute demo narrative
 
-1. **Record** a dated blood-pressure reading offline (value, unit, date/time, who measured
-   or entered it).
+Use **synthetic** records only (a local patient label and a generated ID, never a national
+ID). Keep the **Send/Receive** controls visible on screen.
+
+1. **Record** a blood-pressure reading offline: systolic, diastolic, time, who measured,
+   who entered (measurer and enterer may differ); optional note; optional heart rate.
 2. **Transfer** one patient record device-to-device and **confirm the import** on the BHW
    device.
 3. **Review** the imported history and add a BHW visit note or reading.
-4. **Summarize** — show the concise RHU-ready patient summary.
+4. **Export** the summary as **CSV** (for Excel) to hand to the RHU through the existing
+   process.
 
 Briefly explain **Protobuf** as the record data format and the chosen Android **transport**
-as an implementation detail (Protobuf is the format, not the channel).
+as an implementation detail — Protobuf is the format, not the channel. **Nearby
+Connections** is the candidate transport; its compatibility with the team's actual devices
+and app stack still needs testing.
 
 ## Why it should win on the rubric
 
@@ -40,7 +46,8 @@ fit 25%, technology/automation judgment 25%, innovation 15%, pitch delivery 5%.
 - **Problem/domain fit (25%)** — Targets a concrete Philippine community-care workflow:
   BHW follow-up for hypertension in low-connectivity areas.
 - **Technology/automation judgment (25%)** — Scope is cut aggressively; the transport is a
-  simple, device-appropriate Android choice; Protobuf gives a compact, deterministic record
+  simple, device-appropriate Android choice (**Nearby Connections** candidate, pending
+  device/stack compatibility testing); Protobuf gives a compact, deterministic record
   format within the storage target.
 - **Innovation (15%)** — The offline patient-to-BHW handoff is the differentiator.
 - **Pitch (5%)** — The four-step narrative maps directly to the live demo.

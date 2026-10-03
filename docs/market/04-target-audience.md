@@ -16,8 +16,9 @@ compatible Android device and manually transfer the patient's record to the BHW 
 
 ## Next care destination
 
-The local RHU/YAKAP clinic. The MVP prepares an RHU-ready summary but does **not** digitally
-transfer from BHW to RHU.
+The local RHU/YAKAP clinic. The MVP lets the BHW **export the summary as CSV** (for Excel)
+and provide it to the RHU through the **existing process**. There is **no** direct digital
+BHW-to-RHU transfer.
 
 ## Buyer / payer hypothesis
 
