@@ -13,27 +13,33 @@ population statistics. Unknowns are marked explicitly throughout.
 
 For people with hypertension in far-flung, low-connectivity communities, the app lets a
 patient or caregiver record blood-pressure readings offline and **manually transfer one
-patient's history** to a barangay health worker (BHW) phone or tablet, so the BHW can
-review the record and prepare an RHU/YAKAP-ready summary without live internet.
+patient's record** to a barangay health worker (BHW) phone or tablet, so the BHW can
+review the summary and **export it as CSV** to provide to the RHU through the existing
+process — without live internet.
 
 ## 2. Current MVP scope
 
 In scope:
 
-- Patient/caregiver records blood-pressure readings offline.
+- Patient/caregiver records a blood-pressure reading offline. Required fields: **systolic**
+  and **diastolic** values, **time**, **who measured** it, and **who entered** it (measurer
+  and enterer may differ). **Notes optional.** **Heart rate optional** if easy to capture.
 - Manual, user-initiated transfer of **one** patient record, device to device, with
-  explicit confirmation on the receiving device.
-- BHW reviews imported history, adds visit readings or notes.
-- BHW views a concise RHU/YAKAP-ready patient summary.
+  explicit confirmation on the receiving (BHW) device.
+- BHW reviews the summary and can **export it as CSV** (for Excel), then provide it to the
+  RHU through the **existing process**.
+- Demo records are **synthetic**: a local patient label and a generated ID — **not** a
+  national ID.
+- **Send/Receive is visible** in the UI for the demo. A hidden developer trigger may assist
+  testing but cannot be the only way to use the feature.
 
 Out of scope for the MVP (revisit only after the handoff demo is stable):
 
-- Automatic or background sync; multi-record or bulk replication; automatic merging.
-- Direct BHW-to-RHU digital transfer.
+- Cloud, automatic/background sync, multi-record or bulk replication, automatic merging.
+- Direct RHU connection / BHW-to-RHU digital transfer.
 - QR registry as the core exchange mechanism.
-- Mental-health screening, multiple-condition screening, predictive medicine need,
-  end-to-end referral tracking.
-- Measuring blood pressure, diagnosis, prescribing, medicine procurement.
+- Diagnosis, prediction, medicine features, SMS/USSD, extra conditions.
+- Measuring blood pressure, prescribing, medicine procurement.
 
 ## 3. Users, beneficiaries, implementers, buyer
 
@@ -62,10 +68,10 @@ The value proposition and competition narrative, including the two-minute demo s
 are in [`02-product-value-pitch.md`](./02-product-value-pitch.md) and
 [`03-value-proposition-messaging.md`](./03-value-proposition-messaging.md).
 
-Pitch boundary: the working **offline handoff** is the main demo. The RHU-ready summary
-is framed as the next care step; direct RHU device transfer is future work. Do not claim
-reduced strokes, improved outcomes, full interoperability, medicine availability, or
-adoption without supporting evidence.
+Pitch boundary: the working **offline handoff** is the main demo. The CSV summary export
+(for the RHU's existing process) is framed as the next care step; direct RHU device
+transfer is future work. Do not claim reduced strokes, improved outcomes, full
+interoperability, medicine availability, or adoption without supporting evidence.
 
 ## 6. Required technologies
 
