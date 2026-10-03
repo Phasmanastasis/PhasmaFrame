@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode, type SyntheticEvent } from 'react';
 
 type View = 'home' | 'patients' | 'transfer' | 'summary';
 type Role = 'BHW' | 'Patient / caregiver';
@@ -96,7 +96,7 @@ export default function HealthHub() {
     }
   }, [readings, savedNote, localDataReady]);
 
-  const saveReading = (event: FormEvent<HTMLFormElement>) => {
+  const saveReading = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     const systolic = Number(form.systolic);
     const diastolic = Number(form.diastolic);
