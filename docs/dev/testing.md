@@ -29,7 +29,7 @@ just test -- --test-only  # pass flags through to node:test
 just test-shared          # packages/shared only
 just test-api             # apps/api only
 just test-mobile          # apps/mobile domain only
-just test-web             # prints why web has no unit tests (UI-only island)
+just test-web             # apps/web route map only (UI islands stay out of scope)
 just test-watch @app/shared     # watch mode for one package (human devs)
 just test-coverage @app/api     # node:test coverage report for one package
 ```
@@ -50,10 +50,12 @@ database, no `.env`, and no network.
 
 ## What is deliberately not tested, and why
 
-- **`apps/web`** — it is an Astro site with a single React island (`ApiStatus.tsx`) whose
-  only logic is a `fetch` inside `useEffect` rendered to the DOM. Meaningfully testing it
-  needs a DOM renderer and a Vite/`import.meta.env` environment; that is an integration
-  concern, not a unit one. No non-UI logic was found to extract, so web has no unit tests.
+- **`apps/web`** — unit coverage is limited to the pure role-route map
+  (`src/lib/routes.ts`, tested in `test/routes.test.ts`): the chooser at `/`, the patient
+  flow at `/patient`, and the BHW flow at `/bhw`. The React islands themselves
+  (`HealthHub.tsx`, `PatientFlow.tsx`, `ApiStatus.tsx`) are not unit-tested: their logic is
+  DOM-rendered state and a `fetch` inside `useEffect`, which needs a DOM renderer and a
+  Vite/`import.meta.env` environment — an integration concern, not a unit one.
 - **Static markup / Tailwind classes / Astro pages** — pure presentation; snapshotting it
   tests nothing about behavior.
 - **Prisma against a real database** — the API tests inject a fake Prisma client, so the

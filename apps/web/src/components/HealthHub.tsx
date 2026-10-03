@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode, type SyntheticEvent } from 'react';
 import PatientFlow from './PatientFlow';
+import { ROUTES } from '../lib/routes';
+
+// Navigate between the role routes. Guarded so the component is still safe to
+// render during SSR/static build, where `window` is undefined.
+const navigateTo = (path: string) => {
+  if (typeof window !== 'undefined') window.location.assign(path);
+};
 
 type View = 'home' | 'patients' | 'record' | 'note' | 'summary' | 'receive';
 type Reading = {
@@ -97,9 +104,13 @@ function ReadingRow({ reading }: { reading: Reading }) {
   </article>;
 }
 
-export default function HealthHub() {
+type HealthHubProps = { initialWorkspace?: 'patient' | 'bhw' };
+
+export default function HealthHub({ initialWorkspace }: HealthHubProps = {}) {
   const entryDialogRef = useRef<HTMLElement>(null);
-  const [workspace, setWorkspace] = useState<'choose' | 'patient' | 'bhw'>('choose');
+  // Role is fixed by the page that mounts this component (chooser at `/`,
+  // patient at `/patient`, BHW at `/bhw`); role changes navigate between pages.
+  const [workspace] = useState<'choose' | 'patient' | 'bhw'>(initialWorkspace ?? 'choose');
   const [view, setView] = useState<View>('home');
   const [patients, setPatients] = useState(seededPatients);
   const [selectedId, setSelectedId] = useState(seededPatients[0].id);
@@ -281,8 +292,8 @@ export default function HealthHub() {
     setView('record');
   };
 
-  if (workspace === 'patient') return <PatientFlow onChangeRole={() => setWorkspace('choose')} />;
-  if (workspace === 'choose') return <main className="min-h-screen bg-[#f2f4ef] px-4 py-10 text-[#202522] sm:px-8"><div className="mx-auto max-w-4xl"><div className="mb-9"><p className="mb-2 text-base font-semibold text-[#386b5c]">Alaga · Offline BP follow-up</p><h1 className="mb-3 text-3xl font-semibold tracking-tight text-[#243e35] sm:text-4xl">How will you use this app?</h1><p className="mb-0 max-w-[60ch] text-base leading-7 text-[#526158]">Choose the view that fits you. You can change roles at any time.</p></div><div className="grid gap-5 sm:grid-cols-2"><button type="button" onClick={() => setWorkspace('patient')} className="min-h-52 rounded-3xl bg-white p-6 text-left transition hover:bg-[#f8faf7] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#28675c] sm:p-8"><span className="mb-6 grid size-12 place-items-center rounded-2xl bg-[#dcece4] text-[#285d50]"><Icon name="heart" size={24}/></span><span className="block text-xl font-semibold text-[#293b33]">I’m a patient or caregiver</span><span className="mt-2 block text-base leading-7 text-[#59645c]">Record blood pressure and heart rate, review saved readings, and prepare your record for a BHW.</span></button><button type="button" onClick={() => setWorkspace('bhw')} className="min-h-52 rounded-3xl bg-[#dcece4] p-6 text-left transition hover:bg-[#d2e5da] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#28675c] sm:p-8"><span className="mb-6 grid size-12 place-items-center rounded-2xl bg-white text-[#285d50]"><Icon name="people" size={24}/></span><span className="block text-xl font-semibold text-[#293b33]">I’m a barangay health worker</span><span className="mt-2 block text-base leading-7 text-[#405d4b]">Review patient records, receive a prepared record, add visit notes, and export a summary.</span></button></div><p className="mb-0 mt-7 max-w-[60ch] text-sm leading-6 text-[#626a62]">All information is synthetic demo data. The prototype saves in this browser and does not send records to another device.</p></div></main>;
+  if (workspace === 'patient') return <PatientFlow onChangeRole={() => navigateTo(ROUTES.chooser)} />;
+  if (workspace === 'choose') return <main className="min-h-screen bg-[#f2f4ef] px-4 py-10 text-[#202522] sm:px-8"><div className="mx-auto max-w-4xl"><div className="mb-9"><p className="mb-2 text-base font-semibold text-[#386b5c]">Alaga · Offline BP follow-up</p><h1 className="mb-3 text-3xl font-semibold tracking-tight text-[#243e35] sm:text-4xl">How will you use this app?</h1><p className="mb-0 max-w-[60ch] text-base leading-7 text-[#526158]">Choose the view that fits you. You can change roles at any time.</p></div><div className="grid gap-5 sm:grid-cols-2"><button type="button" onClick={() => navigateTo(ROUTES.patient)} className="min-h-52 rounded-3xl bg-white p-6 text-left transition hover:bg-[#f8faf7] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#28675c] sm:p-8"><span className="mb-6 grid size-12 place-items-center rounded-2xl bg-[#dcece4] text-[#285d50]"><Icon name="heart" size={24}/></span><span className="block text-xl font-semibold text-[#293b33]">I’m a patient or caregiver</span><span className="mt-2 block text-base leading-7 text-[#59645c]">Record blood pressure and heart rate, review saved readings, and prepare your record for a BHW.</span></button><button type="button" onClick={() => navigateTo(ROUTES.bhw)} className="min-h-52 rounded-3xl bg-[#dcece4] p-6 text-left transition hover:bg-[#d2e5da] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#28675c] sm:p-8"><span className="mb-6 grid size-12 place-items-center rounded-2xl bg-white text-[#285d50]"><Icon name="people" size={24}/></span><span className="block text-xl font-semibold text-[#293b33]">I’m a barangay health worker</span><span className="mt-2 block text-base leading-7 text-[#405d4b]">Review patient records, receive a prepared record, add visit notes, and export a summary.</span></button></div><p className="mb-0 mt-7 max-w-[60ch] text-sm leading-6 text-[#626a62]">All information is synthetic demo data. The prototype saves in this browser and does not send records to another device.</p></div></main>;
 
   return <main className="min-h-screen bg-[#f2f4ef] text-[#202522]">
     <div className="mx-auto min-h-screen max-w-[1440px] md:grid md:grid-cols-[248px_minmax(0,1fr)]">
@@ -298,7 +309,7 @@ export default function HealthHub() {
       <div className="min-w-0">
         <header className="sticky top-0 z-10 flex min-h-[72px] items-center justify-between border-b border-[#e3e7df] bg-[#f8f9f5] px-5 md:px-10 print:hidden">
           <div className="flex items-center gap-3"><span className="grid size-9 place-items-center rounded-full bg-[#dcece4] text-[#295d52] md:hidden"><Icon name="heart" size={19} /></span><div><p className="mb-0 text-xs font-medium text-[#606a62]">Barangay San Isidro <span className="px-1">·</span> {dayLabel}</p><h1 className="mb-0 mt-0.5 text-[17px] font-semibold tracking-tight text-[#242a26] md:text-lg">{titles[view]}</h1></div></div>
-          <div className="flex items-center gap-2"><span className="hidden items-center gap-1.5 rounded-full bg-[#e4f1e9] px-3 py-1.5 text-xs font-semibold text-[#376b55] sm:inline-flex"><Icon name="check" size={15} />On this device</span><span className="grid size-9 place-items-center rounded-full bg-[#e8eee7] text-xs font-bold text-[#425e4e]">AC</span><span className="hidden text-sm font-semibold text-[#424a43] sm:block">Ana Cruz</span><button type="button" onClick={() => setWorkspace('choose')} className="min-h-10 rounded-full px-3 text-sm font-semibold text-[#285d50] underline underline-offset-4">Change role</button></div>
+          <div className="flex items-center gap-2"><span className="hidden items-center gap-1.5 rounded-full bg-[#e4f1e9] px-3 py-1.5 text-xs font-semibold text-[#376b55] sm:inline-flex"><Icon name="check" size={15} />On this device</span><span className="grid size-9 place-items-center rounded-full bg-[#e8eee7] text-xs font-bold text-[#425e4e]">AC</span><span className="hidden text-sm font-semibold text-[#424a43] sm:block">Ana Cruz</span><button type="button" onClick={() => navigateTo(ROUTES.chooser)} className="min-h-10 rounded-full px-3 text-sm font-semibold text-[#285d50] underline underline-offset-4">Change role</button></div>
         </header>
 
         <div className="mx-auto max-w-6xl px-4 pb-32 pt-6 sm:px-7 md:px-10 md:pb-12 md:pt-9">

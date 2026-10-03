@@ -55,9 +55,9 @@ test-api +args="":
 test-mobile +args="":
     pnpm --filter @app/mobile test {{ args }}
 
-# Web has no unit tests (UI-only React island); see docs/dev/testing.md
-test-web:
-    @ echo "No apps/web unit tests: UI-only island, out of scope. See docs/dev/testing.md."
+# Run apps/web unit tests only (route map; UI islands remain out of scope)
+test-web +args="":
+    pnpm --filter @app/web test {{ args }}
 
 # Watch mode for a package's tests (human devs): `just test-watch @app/shared`
 test-watch package="@app/shared":
