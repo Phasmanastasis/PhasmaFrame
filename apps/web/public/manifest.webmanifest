@@ -1,0 +1,10 @@
+{
+  "name": "Alaga Offline BP Follow-up",
+  "short_name": "Alaga",
+  "description": "An offline-first blood pressure follow-up record for patients, caregivers, and barangay health workers.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f2f4ef",
+  "theme_color": "#f8f9f5"
+}
