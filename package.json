@@ -14,8 +14,6 @@
   },
   "scripts": {
     "dev": "pnpm --parallel --filter @app/api --filter @app/web dev",
-    "dev:api": "pnpm --filter @app/api dev",
-    "dev:web": "pnpm --filter @app/web dev",
     "build": "pnpm --recursive build",
     "check": "pnpm --recursive check",
     "db:generate": "pnpm --filter @app/api db:generate",

@@ -5,6 +5,10 @@
 # regex to match recipe names and their comments:
 # ^    (?P<recipe>\S+)(?P<args>(?:\s[^#\s]+)*)(?:\s+# (?P<docs>.+))*
 
+# direnv (.envrc) and this `dotenv-load` setting are redundant by design: direnv loads
+# .env for interactive shells, while `dotenv-load` keeps `just` self-sufficient for
+# people who don't use direnv and in CI. `set dotenv-load` is the formatter's canonical
+# form of `set dotenv-load := true`.
 set dotenv-load
 set shell := ["bash", "-cu"]
 
@@ -22,35 +26,35 @@ install:
 
 # Generate the Prisma client (apps/api)
 db-generate:
-    pnpm db:generate
+    pnpm run db:generate
 
 # Create/apply the local SQLite migrations (apps/api)
 db-migrate:
-    pnpm db:migrate
+    pnpm run db:migrate
 
 # Type-check every workspace (tsc + astro check)
 check:
-    pnpm check
+    pnpm run check
 
 # Build every workspace
 build:
-    pnpm build
+    pnpm run build
 
 # Run the API dev server only (tsx watch)
 dev-api:
-    pnpm dev:api
+    pnpm --filter @app/api dev
 
 # Run the web dev server only (astro dev)
 dev-web:
-    pnpm dev:web
+    pnpm --filter @app/web dev
 
 [private]
 ensure-db:
-    @ pnpm db:generate
+    @ pnpm run db:generate
 
 # Run API + web dev servers together (hot reload)
 dev: ensure-db
-    pnpm dev
+    pnpm run dev
 
 # Run a production-style build then serve the built API from dist
 run: ensure-db build
@@ -58,7 +62,7 @@ run: ensure-db build
 
 [private]
 lint-ts:
-    @ pnpm check
+    @ pnpm run check
 
 [private]
 lint-prisma:

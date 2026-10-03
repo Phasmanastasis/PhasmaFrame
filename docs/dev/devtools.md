@@ -1,146 +1,145 @@
-# Dev tools: the `justfile`
+# Dev tools
 
-This project uses [`just`](https://github.com/casey/just) as its task runner. The
-`justfile` at the repo root wraps the real `pnpm` scripts and the Prisma/SQLite setup
-so there is one consistent entrypoint for common tasks.
+A reference for the development tooling in this repository, one section per tool. For
+installation instructions, see [getting-started.md](./getting-started.md).
 
-Run `just` (or `just default`) with no arguments to list every **public** recipe:
+## How the tools relate
+
+- **pnpm** is the package manager. `package.json` holds only the scripts the JS ecosystem
+  expects to find by name (`dev`, `build`, `check`) plus the Prisma helpers CI calls
+  (`db:generate`, `db:migrate`). Those scripts contain the actual tool invocations.
+- **just** is a thin orchestration layer on top. Its recipes call `pnpm run <script>`
+  rather than duplicating command lines, and it owns everything cross-cutting (lint
+  everything, project setup, dev/run flows, non-JS tasks). No command is defined in both
+  places.
+- **direnv** (optional) auto-loads environment variables from `.env` files when you enter
+  the project directory. `just` loads `.env` on its own via `set dotenv-load`, so direnv
+  is a convenience for your interactive shell, not a requirement.
+- **Prisma** manages the database schema and the local SQLite database for the API.
+
+## just
+
+[`just`](https://github.com/casey/just) runs the project's task recipes from the root
+`justfile`. Run `just` with no arguments to list every **public** recipe:
 
 ```bash
-just
-# or explicitly
-just --list
+just                     # lists public recipes (alias for `just --list`)
+just --list              # same
 just --list --unsorted   # same recipes, in file order
 ```
 
-## Conventions
+Conventions used in the `justfile`:
 
-- Every public recipe has a single `# Description` comment directly above it. `just --list`
-  renders those as the recipe's docs, and the comment convention lets tooling parse
-  recipe names + descriptions.
-- `[private]` recipes are hidden from `just --list`. They are small building blocks that
-  the public aggregator recipes (`lint`, `format`, `dev`, `run`, `ci`) call via `just <helper>`.
-- `set dotenv-load` auto-loads a `.env` file if present. `set shell := ["bash", "-cu"]`
-  gives predictable shell behavior.
-- Exported `API_URL` / `WEB_URL` are composed from env vars with fallbacks via
-  `env_var_or_default`, so recipes work out of the box without a `.env` but can be overridden.
+- Every public recipe has a single `# Description` comment directly above it; `just --list`
+  renders those as docs.
+- `[private]` recipes are hidden from `just --list`; they are building blocks called by the
+  public aggregators (`lint`, `format`, `dev`, `run`, `ci`) via `just <helper>`.
+- `set dotenv-load` auto-loads a root `.env`. `set shell := ["bash", "-cu"]` gives
+  predictable shell behavior.
+- Exported `API_URL` / `WEB_URL` are composed from env vars via `env_var_or_default`, so
+  recipes work without a `.env` but can be overridden.
 
-### Exported variables
+### Public recipes
 
-| Variable  | Composed from                         | Default                 |
-| --------- | ------------------------------------- | ----------------------- |
-| `API_URL` | `http://localhost:${PORT}`            | `http://localhost:3000` |
-| `WEB_URL` | `${WEB_ORIGIN}`                       | `http://localhost:4321` |
+| Recipe        | Params (default) | What it does                                                        | Example           |
+| ------------- | ---------------- | ------------------------------------------------------------------- | ----------------- |
+| `default`     | —                | Lists all public recipes (`just -l`).                               | `just`            |
+| `install`     | —                | Install all workspace dependencies (`pnpm install`).                | `just install`    |
+| `db-generate` | —                | Generate the Prisma client (`pnpm run db:generate`).                | `just db-generate`|
+| `db-migrate`  | —                | Create/apply local SQLite migrations (`pnpm run db:migrate`).       | `just db-migrate` |
+| `check`       | —                | Type-check every workspace (`pnpm run check`).                      | `just check`      |
+| `build`       | —                | Build every workspace (`pnpm run build`).                           | `just build`      |
+| `dev-api`     | —                | Run only the API dev server (`pnpm --filter @app/api dev`).         | `just dev-api`    |
+| `dev-web`     | —                | Run only the web dev server (`pnpm --filter @app/web dev`).         | `just dev-web`    |
+| `dev`         | —                | Run API + web dev servers (hot reload); runs `ensure-db` first.     | `just dev`        |
+| `run`         | —                | Production-style: `ensure-db` → `build` → serve `apps/api/dist`.    | `just run`        |
+| `lint`        | —                | Run every private lint helper in order.                             | `just lint`       |
+| `format`      | —                | Format source files in place (Prisma schema).                       | `just format`     |
+| `ci`          | —                | What CI runs: `db-generate` → `check` → `build`.                    | `just ci`         |
 
-## Setup recipes
+None of the current recipes take parameters.
 
-### `install`
-Install all workspace dependencies.
+### Private helpers
+
+Hidden from `just --list`; called by the aggregators above.
+
+| Helper          | Called by    | What it does                                                        |
+| --------------- | ------------ | ------------------------------------------------------------------- |
+| `ensure-db`     | `dev`, `run` | Generate the Prisma client (`pnpm run db:generate`).                |
+| `lint-ts`       | `lint`       | Type-check the codebase (`pnpm run check`).                         |
+| `lint-prisma`   | `lint`       | Validate the Prisma schema (`prisma validate`).                     |
+| `lint-js`       | `lint`       | Placeholder (`@ exit 0`) — no JS linter configured yet.             |
+| `lint-css`      | `lint`       | Placeholder (`@ exit 0`) — no CSS linter configured yet.            |
+| `lint-astro`    | `lint`       | Placeholder (`@ exit 0`) — `astro check` already runs via `lint-ts`.|
+| `format-prisma` | `format`     | Format the Prisma schema (`prisma format`).                         |
+
+The `@ exit 0` placeholders exist so `lint` does not need to change when a real linter for
+that file type is added later — just fill in the helper body.
+
+## direnv
+
+[`direnv`](https://direnv.net/) loads environment variables when you `cd` into the project
+and unloads them when you leave. It is **optional**: `just` already loads `.env` via
+`set dotenv-load`, and nothing in the repo requires direnv.
+
+What the root `.envrc` loads, and from where:
+
+- `dotenv_if_exists .env` — a root `.env` if present.
+- `dotenv_if_exists apps/api/.env` — the API's environment (copy from
+  `apps/api/.env.example`).
+- `watch_file` on `.env`, `apps/api/.env`, and `apps/api/.env.example` — changing any of
+  these reloads the environment automatically.
+
+`.envrc` is executable shell code, so direnv refuses to run it until you trust it:
+
 ```bash
-just install          # → pnpm install
+direnv allow     # trust and load; re-run after any change to .envrc
+direnv status    # show whether the current .envrc is allowed and loaded
 ```
 
-### `db-generate`
-Generate the Prisma client for `apps/api`.
-```bash
-just db-generate      # → pnpm db:generate
-```
+Re-run `direnv allow` whenever `.envrc` changes.
 
-### `db-migrate`
-Create/apply the local SQLite migrations for `apps/api`.
-```bash
-just db-migrate       # → pnpm db:migrate
-```
+## pnpm / package.json scripts
 
-## Dev & run recipes
+[pnpm](https://pnpm.io/) is the package manager (pinned via `packageManager` in
+`package.json`). The repo keeps only the scripts that tools call by name; the `justfile`
+wraps these rather than duplicating them.
 
-### `dev`
-Run the API and web dev servers together with hot reload. Depends on the private
-`ensure-db` helper, which generates the Prisma client first.
-```bash
-just dev              # ensure-db → pnpm dev
-```
+| Script        | Command                                                | Called by                          |
+| ------------- | ------------------------------------------------------ | ---------------------------------- |
+| `dev`         | `pnpm --parallel --filter @app/api --filter @app/web dev` | README, `just dev`, editors     |
+| `build`       | `pnpm --recursive build`                               | CI, hosting platforms, `just build`|
+| `check`       | `pnpm --recursive check`                               | CI, `just check`                   |
+| `db:generate` | `pnpm --filter @app/api db:generate`                   | CI, `just db-generate`             |
+| `db:migrate`  | `pnpm --filter @app/api db:migrate`                    | README, `just db-migrate`          |
 
-### `dev-api`
-Run only the API dev server (`tsx watch`).
-```bash
-just dev-api          # → pnpm dev:api
-```
+Per-app dev commands (`pnpm --filter @app/api dev` / `@app/web dev`) are invoked directly
+by the `dev-api` / `dev-web` recipes, so there are no `dev:api` / `dev:web` scripts to keep
+in sync.
 
-### `dev-web`
-Run only the web dev server (`astro dev`).
-```bash
-just dev-web          # → pnpm dev:web
-```
+Each workspace has its own scripts (not called directly in day-to-day work):
 
-### `run`
-Production-style run: ensure the DB client, build every workspace, then serve the
-compiled API entry from `apps/api/dist`. Depends on `ensure-db` and `build`.
-```bash
-just run              # ensure-db → build → NODE_ENV=production node apps/api/dist/index.js
-```
+- `apps/api`: `dev` (`tsx watch src/index.ts`), `build` (`tsc`), `check` (`tsc --noEmit`),
+  `db:generate` (`prisma generate`), `db:migrate` (`prisma migrate dev`).
+- `apps/web`: `dev` (`astro dev`), `build` (`astro build`), `check` (`astro check`).
+- `packages/shared`: `build` / `check` (`tsc --noEmit`).
 
-## Build & check recipes
+## Prisma
 
-### `build`
-Build every workspace.
-```bash
-just build            # → pnpm build
-```
+[Prisma](https://www.prisma.io/) manages the API's schema (`apps/api/prisma/schema.prisma`)
+and the local SQLite database. You normally use it through just:
 
-### `check`
-Type-check every workspace (`tsc --noEmit` for the API/shared packages, `astro check`
-for the web app).
-```bash
-just check            # → pnpm check
-```
-
-### `ci`
-Run the checks the way CI does: generate the Prisma client, type-check, then build.
-```bash
-just ci               # just db-generate → just check → just build
-```
-
-## Lint & format recipes
-
-### `lint`
-Aggregator that runs each private per-type lint helper in order. It never repeats a
-command a helper already owns.
-```bash
-just lint             # lint-ts → lint-prisma → lint-js → lint-css → lint-astro
-```
-
-### `format`
-Aggregator that formats source files in place.
-```bash
-just format           # format-prisma
-```
-
-## Private helpers
-
-These do not appear in `just --list`. They are called by the aggregators above.
-
-| Helper          | Called by | What it does                                                        |
-| --------------- | --------- | ------------------------------------------------------------------- |
-| `ensure-db`     | `dev`, `run` | Generates the Prisma client (`pnpm db:generate`).                |
-| `lint-ts`       | `lint`    | Type-checks the codebase (`pnpm check`).                            |
-| `lint-prisma`   | `lint`    | Validates the Prisma schema (`prisma validate`).                    |
-| `lint-js`       | `lint`    | Placeholder (`@ exit 0`) — no JS linter configured yet.             |
-| `lint-css`      | `lint`    | Placeholder (`@ exit 0`) — no CSS linter configured yet.            |
-| `lint-astro`    | `lint`    | Placeholder (`@ exit 0`) — `astro check` already runs via `lint-ts`.|
-| `format-prisma` | `format`  | Formats the Prisma schema (`prisma format`).                        |
-
-The `@ exit 0` placeholders exist so the `lint` aggregator does not need to change when
-a real linter for that file type is added later — just fill in the helper body.
+- `just db-generate` — regenerate the client after editing the schema.
+- `just db-migrate` — create/apply migrations against the local SQLite DB.
+- `just format` → `format-prisma` — format the schema file.
+- `just lint` → `lint-prisma` — validate the schema.
 
 ## Keeping this in sync
 
-The recipe names and docs above mirror the `justfile`. After editing recipes, re-run:
+After editing recipes or scripts, re-run and update this document to match:
 
 ```bash
 just --list
 just --list --unsorted
 just --fmt --check
 ```
-
-and update this document to match.
