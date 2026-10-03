@@ -200,3 +200,40 @@ just --list
 just --list --unsorted
 just --fmt --check
 ```
+
+## Android app (`apps/android`)
+
+The repository also contains a greenfield **Kotlin Android app** under `apps/android`,
+built with **Gradle** (not pnpm). It is a separate build from the TypeScript web
+monorepo and does not affect `apps/web`, `apps/api`, or `packages/shared`.
+
+### Module layout
+
+- `:core` — a **pure Kotlin/JVM** module (no Android dependencies). It holds the domain
+  models, the Protobuf bundle codec, the repository/use-case + import logic, and the
+  transport interface. Because it is Android-free, it **compiles and unit-tests on a plain
+  JDK (17 or 21), with no Android SDK**.
+- `:app` — the Android application module (`com.android.application`, `minSdk 23`). It
+  holds Room storage, Jetpack Compose navigation/screens, and the Google Nearby
+  Connections transport implementation. Building it requires the **Android SDK**; UI and
+  instrumented tests require an emulator or device.
+
+### Versions
+
+All plugin and library versions are pinned in `apps/android/gradle/libs.versions.toml`
+(Gradle version catalog). There are no dynamic (`+`) versions. The Gradle wrapper
+(`apps/android/gradlew`) pins the Gradle distribution version.
+
+### just recipes (wrap the Gradle wrapper)
+
+| Recipe                   | What it does                                                        | Needs Android SDK? |
+| ------------------------ | ------------------------------------------------------------------- | ------------------ |
+| `android-test-core`      | JVM unit tests for `:core` (`./gradlew :core:test`).                | No                 |
+| `android-test`           | All JVM unit tests (`./gradlew test`).                              | Yes (`:app`)       |
+| `android-build`          | Assemble the debug APK (`./gradlew :app:assembleDebug`).            | Yes                |
+| `android-lint`           | Android Lint on the app (`./gradlew :app:lintDebug`).               | Yes                |
+| `android-connected-test` | Instrumented tests (`./gradlew :app:connectedDebugAndroidTest`).    | Yes + device       |
+| `android-clean`          | Delete Android build outputs (`./gradlew clean`).                   | No                 |
+
+The recipes wrap `apps/android/gradlew`; they do not duplicate Gradle command bodies.
+See [getting-started.md](./getting-started.md) for installing the JDK and Android SDK.

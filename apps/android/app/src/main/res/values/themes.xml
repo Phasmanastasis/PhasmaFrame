@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base theme. Material3 is applied via Compose; this provides a platform theme
+         for the activity window before Compose content loads. -->
+    <style name="Theme.PhasmaFrame" parent="Theme.AppCompat.DayNight.NoActionBar" />
+</resources>

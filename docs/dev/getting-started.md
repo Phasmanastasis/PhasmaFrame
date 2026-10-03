@@ -235,3 +235,63 @@ run `pnpm rebuild` or delete `node_modules` and run `just install` again.
 
 **Port already in use** — the API uses `PORT` (default 3000) and the web app uses 4321.
 Stop whatever is using the port, or override `PORT` / `WEB_ORIGIN` in `apps/api/.env`.
+
+## Android app setup (`apps/android`)
+
+The Kotlin **Android app** under `apps/android` is a separate Gradle build from the
+TypeScript web monorepo. You only need this section if you are working on the Android
+app. For the module layout and the `just` recipes, see
+[devtools.md](./devtools.md#android-app-appsandroid).
+
+### 1. JDK (17 or 21)
+
+The Android build requires a **JDK 17 or 21** (Temurin/OpenJDK). The Android Gradle
+Plugin does **not** support JDK 25+, so do not point the build at a newer JDK.
+
+- Install Temurin 17 or 21 (e.g. via your package manager, [SDKMAN!](https://sdkman.io/),
+  or <https://adoptium.net/>).
+- Point Gradle at it with either `JAVA_HOME`, or `org.gradle.java.home` in
+  `apps/android/gradle.properties`, or a Gradle toolchain.
+
+Verify:
+```bash
+javac -version   # should print 17.x or 21.x
+```
+
+> The pure-Kotlin `:core` module builds and unit-tests with just this JDK — **no Android
+> SDK required**:
+> ```bash
+> just android-test-core   # ./gradlew :core:test
+> ```
+
+### 2. Android SDK (for the `:app` module)
+
+Building the app module, running Android Lint, or running UI/instrumented tests needs the
+**Android SDK**.
+
+- **Easiest:** install [Android Studio](https://developer.android.com/studio); it bundles
+  the SDK and an SDK manager, and opening `apps/android` will offer to install the right
+  SDK packages (compileSdk 34, build-tools, platform-tools).
+- **CLI only:** install the
+  [command-line tools](https://developer.android.com/tools), then:
+  ```bash
+  sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+  ```
+- Tell Gradle where the SDK is, via **either**:
+  - the `ANDROID_HOME` environment variable, or
+  - `apps/android/local.properties` with `sdk.dir=/absolute/path/to/Android/sdk`
+    (`local.properties` is gitignored — never commit it).
+
+### 3. Build and test
+
+```bash
+just android-test-core   # JVM unit tests for :core (no SDK)
+just android-build       # assemble the debug APK (needs SDK)
+just android-lint        # Android Lint (needs SDK)
+just android-test        # all JVM unit tests (:app needs SDK)
+just android-connected-test  # instrumented tests (needs SDK + emulator/device)
+```
+
+Open `apps/android` in Android Studio to run the app on an emulator or device. The
+Google Nearby Connections transfer flow requires **two physical devices with Google Play
+services** and cannot be exercised on a single emulator.

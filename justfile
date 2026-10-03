@@ -167,3 +167,34 @@ cf-deploy-web:
 # Validate the Worker config + bundle without deploying (no account needed)
 cf-check:
     cd apps/api && npx wrangler deploy --dry-run
+
+# --- Android app (apps/android): Gradle multi-module Kotlin project ---
+# These recipes wrap the Gradle wrapper (apps/android/gradlew); they do not duplicate
+# Gradle command bodies. The `:core` module is pure Kotlin/JVM and builds/tests with any
+# JDK 17 or 21. The `:app` module additionally needs the Android SDK (set ANDROID_HOME or
+# apps/android/local.properties) and, for UI/instrumented tests, an emulator or device.
+# See docs/dev/getting-started.md.
+
+# Assemble the debug APK (:app) — requires the Android SDK
+android-build:
+    cd apps/android && ./gradlew :app:assembleDebug
+
+# Run JVM unit tests for the pure-Kotlin :core module (no Android SDK needed)
+android-test-core:
+    cd apps/android && ./gradlew :core:test
+
+# Run all JVM unit tests (:core + :app host tests) — :app needs the Android SDK
+android-test:
+    cd apps/android && ./gradlew test
+
+# Run Android Lint on the app module — requires the Android SDK
+android-lint:
+    cd apps/android && ./gradlew :app:lintDebug
+
+# Run on-device/emulator instrumented tests — requires the Android SDK + a device
+android-connected-test:
+    cd apps/android && ./gradlew :app:connectedDebugAndroidTest
+
+# Delete the Android build outputs
+android-clean:
+    cd apps/android && ./gradlew clean
