@@ -13,8 +13,14 @@ it, and update it when behavior changes.** Do not duplicate doc content here —
 | [`docs/dev/getting-started.md`](../../docs/dev/getting-started.md) | Installing Node, pnpm, just, direnv, Docker; creating `.env`; first run. |
 | [`docs/dev/devtools.md`](../../docs/dev/devtools.md) | Tool reference: just recipes, pnpm scripts, direnv, Prisma, Docker, Komodo. |
 | [`docs/dev/deployment.md`](../../docs/dev/deployment.md) | Deploying to Komodo: prerequisites, flow, service-user permissions, troubleshooting. |
+| [`docs/dev/workflow.md`](../../docs/dev/workflow.md) | Tracking and shipping work: one feature per branch, PR, and Linear task. |
 
 - **Task runner:** use `just` (`just` lists recipes); recipes wrap `pnpm` scripts.
+- **Workflow rule:** one feature per branch/PR/Linear task — no bundling. Branches follow
+  `jeremyviengarriola/phasm-NN-slug`, PRs link their task and target `master`, never push
+  to `master` directly, never force-push shared branches. Canonical:
+  [`git-linear-workflow.md`](./git-linear-workflow.md) (always on); summary:
+  [`docs/dev/workflow.md`](../../docs/dev/workflow.md).
 - **Deploy rule:** Komodo deploys are bound by [`komodo-deploy.md`](./komodo-deploy.md)
   (always on) — one named stack, confirm before deploy/redeploy/destroy, no resource or
   permission changes, credentials from `.env` only, report status + logs.
