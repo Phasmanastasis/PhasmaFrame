@@ -53,6 +53,13 @@ Conventions used in the `justfile`:
 | `db-generate` | —                | Generate the Prisma client (`pnpm run db:generate`).                | `just db-generate`|
 | `db-migrate`  | —                | Create/apply local SQLite migrations (`pnpm run db:migrate`).       | `just db-migrate` |
 | `check`       | —                | Type-check every workspace (`pnpm run check`).                      | `just check`      |
+| `test`        | `+args=""`       | Run every workspace's unit tests (`pnpm run test`); flags via `--`. | `just test`       |
+| `test-shared` | `+args=""`       | Run `packages/shared` unit tests only.                              | `just test-shared`|
+| `test-api`    | `+args=""`       | Run `apps/api` unit tests only.                                     | `just test-api`   |
+| `test-mobile` | `+args=""`       | Run `apps/mobile` domain unit tests only.                           | `just test-mobile`|
+| `test-web`    | —                | Prints why web has no unit tests (UI-only island).                  | `just test-web`   |
+| `test-watch`  | `package`        | Watch mode for one package's tests (human devs).                    | `just test-watch @app/api`|
+| `test-coverage`| `package`       | `node:test` coverage report for one package.                        | `just test-coverage @app/shared`|
 | `build`       | —                | Build every workspace (`pnpm run build`).                           | `just build`      |
 | `dev-api`     | —                | Run only the API dev server (`pnpm --filter @app/api dev`).         | `just dev-api`    |
 | `dev-web`     | —                | Run only the web dev server (`pnpm --filter @app/web dev`).         | `just dev-web`    |
@@ -60,7 +67,7 @@ Conventions used in the `justfile`:
 | `run`         | —                | Production-style: `ensure-db` → `build` → serve `apps/api/dist`.    | `just run`        |
 | `lint`        | —                | Run every private lint helper in order.                             | `just lint`       |
 | `format`      | —                | Format source files in place (Prisma schema).                       | `just format`     |
-| `ci`          | —                | What CI runs: `db-generate` → `check` → `build`.                    | `just ci`         |
+| `ci`          | —                | What CI runs: `db-generate` → `check` → `build` → `test`.          | `just ci`         |
 | `docker-build`| —                | Build the production image (`docker build`).                        | `just docker-build`|
 | `docker-config`| —               | Validate the compose file (`docker compose config`).                | `just docker-config`|
 | `docker-up`   | —                | Start the compose stack detached.                                   | `just docker-up`  |
@@ -122,6 +129,7 @@ wraps these rather than duplicating them.
 | `dev`         | `pnpm --parallel --filter @app/api --filter @app/web dev` | README, `just dev`, editors     |
 | `build`       | `pnpm --recursive build`                               | CI, hosting platforms, `just build`|
 | `check`       | `pnpm --recursive check`                               | CI, `just check`                   |
+| `test`        | `pnpm --recursive --if-present test`                   | `just test`, `just ci`             |
 | `db:generate` | `pnpm --filter @app/api db:generate`                   | CI, `just db-generate`             |
 | `db:migrate`  | `pnpm --filter @app/api db:migrate`                    | README, `just db-migrate`          |
 
@@ -132,13 +140,17 @@ in sync.
 Each workspace has its own scripts (not called directly in day-to-day work):
 
 - `apps/api`: `dev` (`tsx watch src/index.ts`), `build` (`tsc`), `check` (`tsc --noEmit`),
-  `db:generate` (`prisma generate`), `db:migrate` (`prisma migrate dev`).
+  `db:generate` (`prisma generate`), `db:migrate` (`prisma migrate dev`),
+  `test` (`node --import tsx --test`).
 - `apps/web`: `dev` (`astro dev`), `check` (`astro check`), `build` (`astro build`,
-  then exports and stages the sibling Expo patient web app when `apps/patient` exists).
+  then exports and stages the sibling Expo patient web app when `apps/patient` exists). No
+  `test` script — web is UI-only (see [testing.md](./testing.md)).
 - `apps/patient`: `dev` (`expo start`), `build` (`expo export --platform web`),
   `check` (`tsc --noEmit`). Start the Expo web preview on port 4322 with
   `pnpm --filter @app/patient dev -- --web --port 4322`. The app uses Expo SDK 51 / React Native 0.74 to target Android 6+ (API 23).
-- `packages/shared`: `build` / `check` (`tsc --noEmit`).
+- `packages/shared`: `build` / `check` (`tsc --noEmit`), `test` (`node --import tsx --test`).
+- `apps/mobile`: `check` (`tsc --noEmit`), `test` (`node --import tsx --test`), plus Expo
+  dev/export scripts.
 
 ## Prisma
 
@@ -216,6 +228,13 @@ just cf-deploy-web     # build + deploy the web app to Pages
 Config lives in `apps/api/wrangler.jsonc` and `apps/web/wrangler.jsonc`; D1 schema is in
 `apps/api/migrations/` (Prisma Migrate does not support D1). Full flow, prerequisites, and
 the live URLs: `docs/dev/deployment-cloudflare.md`.
+
+## Testing
+
+Unit tests use the Node built-in test runner (`node:test`) with `tsx` for TypeScript, run
+through the `test*` recipes above. The canonical reference — what is and isn't tested, the
+blood-pressure rule caveats, known spec-vs-code gaps, conventions, and how to add a test —
+is **[testing.md](./testing.md)**. Run `just test` before opening a PR.
 
 ## k6 (API smoke and load checks)
 

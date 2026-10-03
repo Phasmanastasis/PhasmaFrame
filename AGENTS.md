@@ -14,6 +14,7 @@ how things work.** Keep the docs in sync with reality; they are the source of tr
 | [`docs/dev/devtools.md`](docs/dev/devtools.md) | You need a tool reference — just recipes, pnpm scripts, direnv, Prisma, Docker, Komodo. |
 | [`docs/dev/deployment.md`](docs/dev/deployment.md) | Deploying to Komodo: prerequisites, flow, service-user permissions, troubleshooting. |
 | [`docs/dev/workflow.md`](docs/dev/workflow.md) | Tracking and shipping work: one feature per branch, PR, and Linear task. |
+| [`docs/dev/testing.md`](docs/dev/testing.md) | Writing or running unit tests: the runner, `just test*` recipes, what is/isn't covered, conventions. |
 
 ## Workflow rule (one feature per branch/PR/task) — binding
 
@@ -28,6 +29,15 @@ rule: [`.kiro/steering/git-linear-workflow.md`](.kiro/steering/git-linear-workfl
 
 Use `just` as the single entry point (`just` lists all recipes). Recipes wrap the real
 `pnpm` scripts; don't duplicate commands.
+
+## Testing — binding
+
+Run `just test` before opening any PR, and add or update unit tests in the same PR as any
+behavior change. Tests use the Node built-in runner (`node:test` + `tsx`); the canonical
+reference (what is/isn't covered, blood-pressure rule caveats, spec-vs-code gaps,
+conventions, how to add a test) is [`docs/dev/testing.md`](docs/dev/testing.md). Never take
+expected values from the code's own output, and never weaken a test or silently fix a bug
+inside a test change — report the bug and fix it as its own task/PR.
 
 ## Deploy rule (Komodo) — binding
 

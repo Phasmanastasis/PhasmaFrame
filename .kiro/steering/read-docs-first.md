@@ -14,8 +14,13 @@ it, and update it when behavior changes.** Do not duplicate doc content here —
 | [`docs/dev/devtools.md`](../../docs/dev/devtools.md) | Tool reference: just recipes, pnpm scripts, direnv, Prisma, Docker, Komodo. |
 | [`docs/dev/deployment.md`](../../docs/dev/deployment.md) | Deploying to Komodo: prerequisites, flow, service-user permissions, troubleshooting. |
 | [`docs/dev/workflow.md`](../../docs/dev/workflow.md) | Tracking and shipping work: one feature per branch, PR, and Linear task. |
+| [`docs/dev/testing.md`](../../docs/dev/testing.md) | Writing or running unit tests: the runner, `just test*` recipes, coverage, gaps. |
 
 - **Task runner:** use `just` (`just` lists recipes); recipes wrap `pnpm` scripts.
+- **Testing:** run `just test` before any PR; add/update unit tests with every behavior
+  change. Runner is `node:test` + `tsx`; canonical reference is
+  [`docs/dev/testing.md`](../../docs/dev/testing.md). Never copy expected values from the
+  code's output; never weaken a test or hide a bug in a test change — report it.
 - **Workflow rule:** one feature per branch/PR/Linear task — no bundling. Branches follow
   `jeremyviengarriola/phasm-NN-slug`, PRs link their task and target `master`, never push
   to `master` directly, never force-push shared branches. Canonical:
