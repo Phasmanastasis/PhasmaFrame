@@ -1,11 +1,9 @@
-import { Download } from "lucide-react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { getStore } from "../../../src/domain/store";
 import { toCsv } from "../../../src/domain/summary";
-import { OfflineBanner, PrimaryButton } from "../../../src/ui/components";
-import { fonts, styles, theme } from "../../../src/ui/theme";
+import { styles, theme } from "../../../src/ui/theme";
 
 export default function RhuSummary() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -16,11 +14,10 @@ export default function RhuSummary() {
   const [csv, setCsv] = useState<string | null>(null);
 
   return (
-    <ScrollView style={styles.screen}>
-      <OfflineBanner />
+    <ScrollView style={styles.scrollScreen} contentContainerStyle={styles.scrollContent}>
       <Text style={styles.title}>{patient?.label ?? id}</Text>
       <Text style={styles.subtitle}>
-        Review and export only. This screen does not send data to an RHU.
+        A summary to review with a health worker. This screen does not send data to a clinic.
       </Text>
 
       <View style={styles.card}>
@@ -28,23 +25,23 @@ export default function RhuSummary() {
         <Text style={styles.cardMeta}>Visit notes: {notes.length}</Text>
       </View>
 
-      <PrimaryButton
-        label="Export summary as CSV"
-        icon={Download}
+      <TouchableOpacity
+        style={styles.button}
+        accessibilityRole="button"
+        accessibilityLabel="Show a CSV summary preview"
         onPress={() => setCsv(toCsv(readings))}
-      />
+      >
+        <Text style={styles.buttonText}>Prepare CSV summary</Text>
+      </TouchableOpacity>
 
       {csv ? (
         <View style={[styles.card, { marginTop: 12 }]}>
-          <Text style={styles.ok}>CSV generated</Text>
+          <Text style={styles.ok}>CSV preview is ready</Text>
+          <Text style={styles.cardMeta}>Press and hold the text to select or copy it.</Text>
           <Text
-            style={{
-              color: theme.textMuted,
-              fontFamily: fonts.body,
-              fontSize: 12,
-              marginTop: 6,
-            }}
+            style={{ color: theme.text, fontFamily: "monospace", fontSize: 16, lineHeight: 24, marginTop: 12 }}
             selectable
+            accessibilityLabel="CSV summary preview"
           >
             {csv}
           </Text>
