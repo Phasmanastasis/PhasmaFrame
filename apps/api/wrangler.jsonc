@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "phasmaframe-api",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-04",
+  // nodejs_compat is required by the Prisma client / @prisma/adapter-d1 on Workers.
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      // Available in the Worker as env.DB (see src/worker.ts Env).
+      "binding": "DB",
+      "database_name": "phasmaframe",
+      // Fill in after `wrangler d1 create phasmaframe` (or from the dashboard).
+      // Left as a placeholder so the config is committable without an account.
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    // Override per environment with the deployed Pages URL. Not a secret.
+    "WEB_ORIGIN": "http://localhost:4321"
+  }
+}
