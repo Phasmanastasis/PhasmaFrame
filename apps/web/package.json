@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "astro build && if [ -d ../patient ]; then pnpm --dir ../patient run build && cp ../patient/dist/index.html dist/index.html && rm -rf dist/_expo && cp -R ../patient/dist/_expo dist/_expo && mkdir -p dist/assets && cp -R ../patient/dist/assets/. dist/assets/; fi",
     "check": "astro check",
     "cf:dev": "wrangler pages dev",
     "cf:deploy": "wrangler pages deploy dist --project-name=kasigla"
