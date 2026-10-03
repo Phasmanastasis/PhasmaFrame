@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package phasmaframe.transfer.v1;
+
+option java_package = "org.phasmaframe.core.proto";
+option java_multiple_files = true;
+
+// Wire schema for a one-patient transfer bundle (#18). Protobuf is the PAYLOAD format,
+// not the transport. The bundle carries an explicit schema_version so a receiver can
+// reject unknown versions (SDD failure handling).
+
+enum EntrySourceProto {
+  ENTRY_SOURCE_UNSPECIFIED = 0;
+  ENTRY_SOURCE_PATIENT_OR_CAREGIVER = 1;
+  ENTRY_SOURCE_BHW = 2;
+}
+
+message PatientProto {
+  string id = 1;
+  string display_label = 2;
+}
+
+message BloodPressureReadingProto {
+  string id = 1;
+  string patient_id = 2;
+  int32 systolic = 3;
+  int32 diastolic = 4;
+  int64 measured_at_epoch_millis = 5;
+  string measured_by = 6;
+  int64 entered_at_epoch_millis = 7;
+  string entered_by = 8;
+  string note = 9;            // empty string == no note
+  EntrySourceProto source = 10;
+}
+
+message VisitNoteProto {
+  string id = 1;
+  string patient_id = 2;
+  string author = 3;
+  int64 created_at_epoch_millis = 4;
+  string text = 5;
+  EntrySourceProto source = 6;
+}
+
+message TransferBundleProto {
+  string id = 1;
+  // Explicit payload schema version. The decoder rejects versions it does not support.
+  int32 schema_version = 2;
+  PatientProto patient = 3;
+  repeated BloodPressureReadingProto readings = 4;
+  repeated VisitNoteProto visit_notes = 5;
+  int64 created_at_epoch_millis = 6;
+}

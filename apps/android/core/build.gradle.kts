@@ -1,16 +1,14 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // :core — pure Kotlin/JVM module. NO Android dependencies.
-// Holds domain models, the Protobuf bundle codec (#18), repository/use-case + import
-// logic (#21), transport interfaces (#20), and validation. Because it is Android-free,
-// it compiles and unit-tests on a plain JDK (no Android SDK required).
+// Holds domain models, the Protobuf schema + bundle codec (#18), repository/use-case +
+// import logic (#21), transport interfaces (#20), and validation. Because it is
+// Android-free, it compiles and unit-tests on a plain JDK (17 or 21), no Android SDK.
 //
-// Bytecode targets Java 17 (compatible with the Android app module). Compilation runs on
-// whatever JDK runs Gradle (JDK 17 or 21). We intentionally do not pin a strict Gradle
-// Java toolchain so the module builds against the locally installed JDK without requiring
-// a toolchain auto-download.
+// Bytecode targets Java 17; compilation runs on whatever JDK runs Gradle (17 or 21).
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.protobuf)
 }
 
 java {
@@ -26,10 +24,30 @@ kotlin {
 
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
+    // protobuf-javalite runs on a plain JVM as well as Android, so the generated code and
+    // codec are unit-testable here without the Android SDK.
+    implementation(libs.protobuf.javalite)
 
     testImplementation(libs.junit)
     testImplementation(libs.truth)
     testImplementation(libs.kotlinx.coroutines.test)
+}
+
+protobuf {
+    protoc {
+        artifact = libs.protobuf.protoc.get().toString()
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                // The plugin registers a default "java" builtin; configure it for the
+                // lite runtime (matches protobuf-javalite) rather than adding a new one.
+                named("java") {
+                    option("lite")
+                }
+            }
+        }
+    }
 }
 
 tasks.withType<Test> {
