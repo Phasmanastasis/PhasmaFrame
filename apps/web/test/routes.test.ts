@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
 import { ROUTES, routeForWorkspace } from '../src/lib/routes';
 
@@ -26,4 +27,11 @@ test('routeForWorkspace: maps each role workspace to its landing route', () => {
 test('ROUTES: the three role routes are all distinct', () => {
   const paths = [ROUTES.chooser, ROUTES.patient, ROUTES.bhw];
   assert.equal(new Set(paths).size, paths.length);
+});
+
+test('Cloudflare Pages redirects extensionless role URLs to slash routes', async () => {
+  const redirects = await readFile(new URL('../public/_redirects', import.meta.url), 'utf8');
+
+  assert.match(redirects, /^\/patient \/patient\/ 301$/m);
+  assert.match(redirects, /^\/bhw \/bhw\/ 301$/m);
 });

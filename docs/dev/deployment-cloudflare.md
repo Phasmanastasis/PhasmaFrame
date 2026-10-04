@@ -80,6 +80,10 @@ is same-origin, so no `PUBLIC_API_URL` is needed:
 just cf-deploy-web     # builds, then deploys dist to the `kasigla` Pages project
 ```
 
+The extensionless `/patient` and `/bhw` URLs redirect to their trailing-slash Pages routes
+through `apps/web/public/_redirects`. Keep those rules when changing the role route paths;
+Cloudflare Pages serves the generated `index.html` routes with trailing slashes.
+
 The custom domain `kasigla.kuyacarlo.dev` is already attached to the `kasigla` Pages
 project. For a brand-new project, create it first:
 
