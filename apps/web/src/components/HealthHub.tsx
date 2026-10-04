@@ -310,7 +310,7 @@ export default function HealthHub({ initialWorkspace }: HealthHubProps = {}) {
       <div className="min-w-0">
         <div className="mx-auto max-w-6xl px-4 pb-12 pt-6 sm:px-7 md:px-10 md:pt-9">
           <div className="mb-6 flex items-center justify-between gap-4">
-            <div className="flex min-w-0 items-center gap-3"><button type="button" aria-label="Go to home" onClick={() => setView('home')} className="grid size-9 shrink-0 place-items-center rounded-xl text-[#285d50] hover:bg-[#e4f1e9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#28675c] md:hidden"><Icon name="home" size={19}/></button><div className="min-w-0"><h1 className="mb-0 text-[22px] font-semibold tracking-tight text-[#242a26] md:text-2xl">{view === 'home' ? 'Hi, Ana Cruz' : titles[view]}</h1><p className="mb-0 mt-0.5 text-xs font-medium text-[#606a62]">Barangay San Isidro <span className="px-1">·</span> {dayLabel}</p></div></div>
+            <div className="flex min-w-0 items-center gap-3"><div className="min-w-0"><h1 className="mb-0 text-[22px] font-semibold tracking-tight text-[#242a26] md:text-2xl">{view === 'home' ? 'Hi, Ana Cruz' : titles[view]}</h1><p className="mb-0 mt-0.5 text-xs font-medium text-[#606a62]">Barangay San Isidro <span className="px-1">·</span> {dayLabel}</p></div></div>
             <span role="img" aria-label="Ana Cruz" className="grid size-10 shrink-0 place-items-center rounded-full bg-[#dcece4] text-[#285d50]"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3"/><path d="M5 20v-1a7 7 0 0 1 14 0v1"/></svg></span>
           </div>
           {view === 'home' && <>
