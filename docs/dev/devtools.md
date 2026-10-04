@@ -63,6 +63,7 @@ Conventions used in the `justfile`:
 | `build`       | —                | Build every workspace (`pnpm run build`).                           | `just build`      |
 | `dev-api`     | —                | Run only the API dev server (`pnpm --filter @app/api dev`).         | `just dev-api`    |
 | `dev-web`     | —                | Run only the web dev server (`pnpm --filter @app/web dev`).         | `just dev-web`    |
+| `mobile-start`| —                | Run the Expo dev server for `apps/mobile` (see [mobile.md](./mobile.md)). | `just mobile-start`|
 | `dev`         | —                | Run API + web dev servers (hot reload); runs `ensure-db` first.     | `just dev`        |
 | `run`         | —                | Production-style: `ensure-db` → `build` → serve `apps/api/dist`.    | `just run`        |
 | `lint`        | —                | Run every private lint helper in order.                             | `just lint`       |
@@ -150,7 +151,8 @@ Each workspace has its own scripts (not called directly in day-to-day work):
 - `packages/shared`: `build` / `check` (`tsc --noEmit`), `test` (`node --import tsx --test`).
 - `apps/mobile`: `dev` (`expo start`), `web` (`expo start --web`), `build:web`
   (`expo export --platform web`), `check` (`tsc --noEmit`), and
-  `test` (`node --import tsx --test`).
+  `test` (`node --import tsx --test`). To run it on an Android device/emulator via Expo
+  Go, see [mobile.md](./mobile.md).
 
 ## Prisma
 

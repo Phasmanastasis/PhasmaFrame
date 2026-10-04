@@ -184,6 +184,12 @@ just test-shared     # or a single package: test-shared / test-api / test-mobile
 `just test` needs only `just install` first — no database, `.env`, or network. For what is
 and isn't covered and how to add tests, see [testing.md](./testing.md).
 
+### Running the mobile app on Android
+
+To run `apps/mobile` (the Expo / React Native app) on an Android phone or emulator via
+Expo Go — including the verified Expo SDK upgrade steps, prerequisites, and known
+device quirks — see [mobile.md](./mobile.md).
+
 ### Komodo deploy credentials & permissions
 
 Deploying is optional for local dev. If you will deploy:
