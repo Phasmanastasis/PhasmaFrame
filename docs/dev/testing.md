@@ -29,7 +29,7 @@ just test -- --test-only  # pass flags through to node:test
 just test-shared          # packages/shared only
 just test-api             # apps/api only
 just test-mobile          # apps/mobile domain only
-just test-web             # apps/web route map only (UI islands stay out of scope)
+just test-web             # apps/web route map + offline service-worker cache behavior
 just test-watch @app/shared     # watch mode for one package (human devs)
 just test-coverage @app/api     # node:test coverage report for one package
 ```
@@ -47,12 +47,12 @@ database, no `.env`, and no network.
 | Shared contracts | `packages/shared` | Zod schemas: `healthResponseSchema`, `createExampleRequestSchema` (trim, min 1, max 80), `exampleResponseSchema` (ISO-8601 `createdAt`) — valid, boundary, invalid, and error-shape cases. |
 | API routes | `apps/api` | The Hono app via in-process `app.request()` with a mocked Prisma client: `/api/health` body, `GET`/`POST /api/examples`, POST validation failures, unknown-route 404 status. No network, no real database. |
 | Domain logic | `apps/mobile` | The pure `src/domain` layer: reading validation, the transfer-bundle codec (round-trip, determinism, versioning, malformed input), the repeat-safe/append-only import store, the import use-case stages, the Send/Receive transfer state machines, and the CSV summary builder. |
+| Web routing and offline cache | `apps/web` | Role route mapping and the service worker's offline route aliases, query-string handling, and readable cache-miss response. |
 
 ## What is deliberately not tested, and why
 
-- **`apps/web`** — unit coverage is limited to the pure role-route map
-  (`src/lib/routes.ts`, tested in `test/routes.test.ts`): the chooser at `/`, the patient
-  flow at `/patient`, and the BHW flow at `/bhw`. The React islands themselves
+- **`apps/web`** — role mapping (`src/lib/routes.ts`) and the service worker cache behavior
+  (`public/offline-worker.js`) have focused unit coverage. The React islands themselves
   (`HealthHub.tsx`, `PatientFlow.tsx`, `ApiStatus.tsx`) are not unit-tested: their logic is
   DOM-rendered state and a `fetch` inside `useEffect`, which needs a DOM renderer and a
   Vite/`import.meta.env` environment — an integration concern, not a unit one.

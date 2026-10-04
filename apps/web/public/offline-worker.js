@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alaga-shell-v3';
+const CACHE_NAME = 'alaga-shell-v4';
 
 // Document routes that must survive a first-ever offline navigation. Each is
 // crawled at install time (same as the root) so its hashed /_astro/* chunks and
@@ -12,7 +12,9 @@ const ROUTES = ['/', '/choose', '/patient', '/bhw', '/about', '/offline'];
 // tolerates individual fetch failure, so a missing asset never breaks install.
 const PRECACHE_URLS = [
   ...ROUTES,
-  '/offline.html',
+  '/patient/',
+  '/bhw/',
+  '/offline/',
   '/manifest.webmanifest',
   '/manifest-patient.webmanifest',
   '/manifest-bhw.webmanifest',
@@ -77,7 +79,7 @@ self.addEventListener('install', event => {
         const url = new URL(route, self.location.origin).href;
         const response = await fetch(url);
         if (!response.ok) return;
-        await cache.put(url, response.clone());
+        await cacheRouteAliases(cache, url, response);
         const html = await response.text();
         // Capture classic asset attributes (src/href) AND Astro island hydration
         // attributes (component-url/renderer-url) so the React island's JS chunks
@@ -91,13 +93,15 @@ self.addEventListener('install', event => {
       }
     };
     await Promise.all(ROUTES.map(crawlRoute));
+    await self.skipWaiting();
   })());
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('alaga-shell-') && key !== CACHE_NAME).map(key => caches.delete(key)))));
-  self.clients.claim();
+  event.waitUntil(Promise.all([
+    caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('alaga-shell-') && key !== CACHE_NAME).map(key => caches.delete(key)))),
+    self.clients.claim(),
+  ]));
 });
 
 self.addEventListener('fetch', event => {
@@ -115,16 +119,14 @@ self.addEventListener('fetch', event => {
       try {
         const response = await fetch(request);
         if (response.ok) {
-          try { await caches.open(CACHE_NAME).then(cache => cache.put('/', response.clone())); } catch { /* cache write is best-effort */ }
+          try {
+            const cache = await caches.open(CACHE_NAME);
+            await cacheRouteAliases(cache, request.url, response);
+          } catch { /* cache write is best-effort */ }
         }
         return response;
       } catch {
-        // Offline: prefer the exact cached document, then the cached shell at /,
-        // then the static offline fallback. Guard so a cache miss never throws.
-        return (await caches.match(request))
-          || (await caches.match('/'))
-          || (await caches.match('/offline.html'))
-          || Response.error();
+        return (await matchCachedNavigation(request)) || offlineResponse();
       }
     })());
     return;
@@ -141,7 +143,43 @@ self.addEventListener('fetch', event => {
       return response;
     } catch {
       // Guard: a cache miss plus a network failure must resolve, not throw.
-      return (await caches.match(request)) || Response.error();
+      return (await caches.match(request)) || offlineResponse();
     }
   })());
 });
+
+function routeAliases(input) {
+  const url = new URL(input, self.location.origin);
+  const path = url.pathname;
+  const normalized = path.length > 1 ? path.replace(/\/+$/, '') : '/';
+  const aliases = [new URL(path + url.search, url.origin).href];
+  if (url.search) aliases.push(new URL(path, url.origin).href);
+  if (normalized !== path) aliases.push(new URL(normalized, url.origin).href);
+  if (normalized !== '/') aliases.push(new URL(`${normalized}/`, url.origin).href);
+  return [...new Set(aliases)];
+}
+
+async function cacheRouteAliases(cache, input, response) {
+  await Promise.all(routeAliases(input).map(alias => cache.put(alias, response.clone())));
+}
+
+async function matchCachedNavigation(request) {
+  const url = new URL(request.url);
+  const aliases = routeAliases(url.href);
+  const roleRoute = /^\/(patient|bhw)(?:\/|$)/.exec(url.pathname)?.[1];
+  if (roleRoute) aliases.push(...routeAliases(new URL(`/${roleRoute}`, url.origin).href));
+
+  for (const alias of [...new Set(aliases)]) {
+    const cached = await caches.match(alias);
+    if (cached) return cached;
+  }
+
+  return (await caches.match('/offline/')) || (await caches.match('/offline'));
+}
+
+function offlineResponse() {
+  return new Response('You are offline. This screen is not cached yet. Open Kasigla once while online, then try again.', {
+    status: 503,
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+  });
+}
