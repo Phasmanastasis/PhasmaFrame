@@ -174,6 +174,11 @@ Then open the web app at <http://localhost:4321>. The API runs at
 
 > Tip: `just dev-api` and `just dev-web` run a single side if you only need one.
 
+> The dev web server does not proxy `/api/*` to the API. If you need the dev web app to call
+> the dev API, set `PUBLIC_API_URL=http://localhost:3000` for the web app (for example
+> `PUBLIC_API_URL=http://localhost:3000 just dev-web`). In production the two are same-origin,
+> so `PUBLIC_API_URL` is left unset. See [RUNNING.md](../../RUNNING.md#running-in-development).
+
 ### Running the tests
 
 ```bash
