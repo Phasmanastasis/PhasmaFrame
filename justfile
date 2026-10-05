@@ -79,6 +79,10 @@ dev-api:
 dev-web:
     pnpm --filter @app/web dev
 
+# Run the Expo dev server for the mobile app (see docs/dev/mobile.md)
+mobile-start:
+    pnpm --filter @app/mobile dev
+
 [private]
 ensure-db:
     @ pnpm run db:generate
